@@ -2,6 +2,7 @@
   "FirstName": "Donald",
   "LastName": "Trump",
   "BirthDate": "1946-06-14T00:00:00-07:00",
+  "Age": 74,
   "Race":  "White",
   "Spouse": {
     "FirstName": "Melania",
@@ -14,11 +15,13 @@
   "Children": [
     {
       "FirstName": "Tiffany",
-      "LastName": "Trump"
+      "LastName": "Trump",
+      "Age": 26
     },
     {
       "FirstName": "Barron",
-      "LastName": "Trump"
+      "LastName": "Trump",
+      "Age": 14
     }
   ],
   "Titles": [

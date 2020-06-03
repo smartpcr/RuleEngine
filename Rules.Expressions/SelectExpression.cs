@@ -28,7 +28,20 @@ namespace Rules.Expressions
 
         public MethodCallExpression Create()
         {
-            var itemType = callInfo.TargetType.GetGenericArguments()[0];
+            Type itemType;
+            if (callInfo.TargetType.IsGenericType)
+            {
+                itemType = callInfo.TargetType.GetGenericArguments()[0];    
+            }
+            else if (callInfo.TargetType.IsArray)
+            {
+                itemType = callInfo.TargetType.GetElementType();
+            }
+            else
+            {
+                throw new InvalidOperationException($"target type '{callInfo.TargetType.Name}' of select function is not supported");
+            }
+            
             var paramExpression = Expression.Parameter(itemType, "item");
             var propNames = selectionPath.Split(new[] {'.'});
             Expression propExpression = paramExpression;

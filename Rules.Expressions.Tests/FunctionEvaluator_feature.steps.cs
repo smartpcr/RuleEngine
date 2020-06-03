@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="FilterEvaluate_feature_steps.cs" company="Microsoft Corporation">
+// <copyright file="FunctionEvaluator_feature_steps.cs" company="Microsoft Corporation">
 //   Copyright (c) 2020 Microsoft Corporation.  All rights reserved.
 // </copyright>
 // <summary>
@@ -8,20 +8,15 @@
 
 namespace Rules.Expressions.Tests
 {
-    using System;
-    using System.Collections.Generic;
     using Contexts;
     using Evaluators;
     using LightBDD.Framework;
     using LightBDD.Framework.Parameters;
     using LightBDD.MsTest2;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Converters;
-    using Newtonsoft.Json.Serialization;
     using TestData;
 
-    public partial class FilterEvaluate_feature : FeatureFixture
+    public partial class FunctionEvaluator_feature : FeatureFixture
     {
         private object evaluationContext;
         private IConditionExpression conditionExpression;
@@ -31,23 +26,13 @@ namespace Rules.Expressions.Tests
             evaluationContext = new JsonFixtureFile($"{cityName}.json").JObjectOf<T>();
             StepExecution.Current.Comment($"Current context \n{typeof(T).Name}:\n{evaluationContext.FormatObject()}\n");
         }
-
-        private void I_evaluate_context_with_condition(string left, Operator op, string right)
-        {
-            conditionExpression = new LeafExpression()
-            {
-                Left = left,
-                Operator = op,
-                Right = right
-            };
-        }
-
+        
         private void I_evaluate_context_with_filter(IConditionExpression filter)
         {
             conditionExpression = filter;
             StepExecution.Current.Comment($"Current filter:\n{conditionExpression.FormatObject()}\n");
         }
-
+        
         private void Evaluation_results_should_be(Verifiable<bool> expected)
         {
             var builder = new ExpressionBuilder();

@@ -9,6 +9,7 @@
 namespace Rules.Expressions.Tests.Contexts
 {
     using System;
+    using System.Collections.Generic;
 
     public class Person
     {
@@ -18,11 +19,12 @@ namespace Rules.Expressions.Tests.Contexts
         public string LastName { get; set; }
         public Gender? Gender { get; set; }
         public Race? Race { get; set; }
+        public int Age { get; set; }
         public Person Spouse { get; set; }
         public Person Dad { get; set; }
         public Person Mom { get; set; }
         public Person[] Children { get; set; }
-        public string[] Hobbies { get; set; }
+        public List<string> Hobbies { get; set; }
         public string[] Titles { get; set; }
     }
     

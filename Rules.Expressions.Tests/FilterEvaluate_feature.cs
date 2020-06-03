@@ -303,5 +303,33 @@ I want to evaluate rules against strongly typed context")]
                 when => I_evaluate_context_with_filter(filter),
                 then => Evaluation_results_should_be(true));
         }
+        
+        [Scenario]
+        public void verify_context_with_expression_on_each_side_returns_true()
+        {
+            IConditionExpression filter = new AllOfExpression()
+            {
+                AllOf = new IConditionExpression[]
+                {
+                    new LeafExpression()
+                    {
+                        Left = "Children[0].LastName",
+                        Operator = Operator.Equals,
+                        Right = "Children[1].LastName",
+                        RightSideIsExpression = true
+                    },
+                    new LeafExpression()
+                    {
+                        Left = "Children.Count()",
+                        Operator = Operator.Equals,
+                        Right = "2"
+                    }
+                }
+            };
+            Runner.RunScenario(
+                given => An_evaluation_context<Person>("donald_trump"),
+                when => I_evaluate_context_with_filter(filter),
+                then => Evaluation_results_should_be(true));
+        }
     }
 }
