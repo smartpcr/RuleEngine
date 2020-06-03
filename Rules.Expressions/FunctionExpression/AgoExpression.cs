@@ -17,8 +17,13 @@ namespace Rules.Expressions.FunctionExpression
         private readonly TimeSpan span;
         private static readonly Regex argRegex = new Regex(@"(\d+)(m|h|d)", RegexOptions.Compiled);
         
-        public AgoExpression(Expression target, FunctionName funcName, string funcArg) : base(target, funcName, funcArg)
+        public AgoExpression(Expression target, FunctionName funcName, params string[] args) : base(target, funcName, args)
         {
+            if (args == null || args.Length != 1)
+            {
+                throw new ArgumentException($"Exactly one argument is required for function '{funcName}'");
+            }
+            var funcArg = args[0];
             var match = argRegex.Match(funcArg);
             if (!match.Success)
             {

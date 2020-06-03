@@ -53,7 +53,25 @@ namespace Rules.Expressions
         /// <summary>
         /// Select(propPath)
         /// </summary>
-        Select
+        Select,
+        
+        /// <summary>
+        /// Where(fieldName, operator, fieldValue)
+        /// fieldName is prop name
+        /// operator can only be binary: equals, notEquals, greaterThan, greaterOrEqual, lessThan, lessOrEqual
+        /// fieldValue must be constant
+        /// </summary>
+        Where,
+        
+        /// <summary>
+        /// Traverse(propName, idPropName, steps)
+        /// propName: must return instance of the same type
+        /// idPropName: unique prop of type string, helps tracking loops
+        /// steps: number of steps taken until stop, default to -1 and continue until next traverse returns null
+        /// returns IEnumerable of instances (empty if it's already at root)
+        /// returns null when circular-reference found
+        /// </summary>
+        Traverse
     }
 
     public static class FunctionNameExtension

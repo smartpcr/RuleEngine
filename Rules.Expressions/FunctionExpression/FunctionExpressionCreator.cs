@@ -13,7 +13,7 @@ namespace Rules.Expressions.FunctionExpression
 
     public class FunctionExpressionCreator
     {
-        public FunctionExpression Create(Expression target, FunctionName funcName, string arg)
+        public FunctionExpression Create(Expression target, FunctionName funcName, params string[] args)
         {
             switch (funcName)
             {
@@ -23,11 +23,11 @@ namespace Rules.Expressions.FunctionExpression
                 case FunctionName.Max:
                 case FunctionName.Min:
                 case FunctionName.Sum:
-                    return new AggregateExpression(target, funcName, arg);
+                    return new AggregateExpression(target, funcName, args);
                 case FunctionName.Select:
-                    return new SelectExpression(target, arg);
+                    return new SelectExpression(target, args);
                 case FunctionName.Ago:
-                    return new AgoExpression(target, funcName, arg);
+                    return new AgoExpression(target, funcName, args);
                 default:
                     throw new NotImplementedException();
             }
@@ -38,13 +38,13 @@ namespace Rules.Expressions.FunctionExpression
     {
         protected Expression Target { get; }
         protected FunctionName FuncName { get; }
-        protected string FuncArg { get; }
+        public string[] Args { get; }
 
-        protected FunctionExpression(Expression target, FunctionName funcName, string funcArg)
+        protected FunctionExpression(Expression target, FunctionName funcName, params string[] args)
         {
             Target = target;
             FuncName = funcName;
-            FuncArg = funcArg;
+            Args = args;
         }
 
         public abstract MethodCallExpression Create();

@@ -110,8 +110,9 @@ namespace Rules.Expressions
                 {
                     var functionName = match.Groups[1].Value;
                     var functionArg = match.Groups[2].Value;
+                    var args = functionArg.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries).Select(a => a.Trim()).ToArray();
                     var funcName = (FunctionName)Enum.Parse(typeof(FunctionName), functionName);
-                    var funcExpr = new FunctionExpressionCreator().Create(parentExpression, funcName, functionArg);
+                    var funcExpr = new FunctionExpressionCreator().Create(parentExpression, funcName, args);
                     functionExpression = funcExpr.Create();
                     return true;
                 }
