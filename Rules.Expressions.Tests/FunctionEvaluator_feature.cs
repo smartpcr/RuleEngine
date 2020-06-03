@@ -133,6 +133,28 @@ I want to have built-in functions in rule expression")]
         }
         
         [Scenario]
+        public void should_be_able_to_call_sum_with_arg()
+        {
+            IConditionExpression filter = new AllOfExpression()
+            {
+                AllOf = new IConditionExpression[]
+                {
+                    new LeafExpression()
+                    {
+                        Left = "Children.Sum(Age)",
+                        Operator = Operator.Equals,
+                        Right = "40"
+                    }
+                }
+            };
+            
+            Runner.RunScenario(
+                given => An_evaluation_context<Person>("donald_trump"),
+                when => I_evaluate_context_with_filter(filter),
+                then => Evaluation_results_should_be(true));
+        }
+        
+        [Scenario]
         public void should_be_able_to_call_avg()
         {
             IConditionExpression filter = new AllOfExpression()
@@ -142,6 +164,28 @@ I want to have built-in functions in rule expression")]
                     new LeafExpression()
                     {
                         Left = "Children.Select(Age).Average()",
+                        Operator = Operator.Equals,
+                        Right = "20"
+                    }
+                }
+            };
+            
+            Runner.RunScenario(
+                given => An_evaluation_context<Person>("donald_trump"),
+                when => I_evaluate_context_with_filter(filter),
+                then => Evaluation_results_should_be(true));
+        }
+        
+        [Scenario]
+        public void should_be_able_to_call_avg_with_arg()
+        {
+            IConditionExpression filter = new AllOfExpression()
+            {
+                AllOf = new IConditionExpression[]
+                {
+                    new LeafExpression()
+                    {
+                        Left = "Children.Average(Age)",
                         Operator = Operator.Equals,
                         Right = "20"
                     }
@@ -177,6 +221,28 @@ I want to have built-in functions in rule expression")]
         }
         
         [Scenario]
+        public void should_be_able_to_call_max_with_arg()
+        {
+            IConditionExpression filter = new AllOfExpression()
+            {
+                AllOf = new IConditionExpression[]
+                {
+                    new LeafExpression()
+                    {
+                        Left = "Children.Max(Age)",
+                        Operator = Operator.Equals,
+                        Right = "26"
+                    }
+                }
+            };
+            
+            Runner.RunScenario(
+                given => An_evaluation_context<Person>("donald_trump"),
+                when => I_evaluate_context_with_filter(filter),
+                then => Evaluation_results_should_be(true));
+        }
+        
+        [Scenario]
         public void should_be_able_to_call_min()
         {
             IConditionExpression filter = new AllOfExpression()
@@ -186,6 +252,28 @@ I want to have built-in functions in rule expression")]
                     new LeafExpression()
                     {
                         Left = "Children.Select(Age).Min()",
+                        Operator = Operator.Equals,
+                        Right = "14"
+                    }
+                }
+            };
+            
+            Runner.RunScenario(
+                given => An_evaluation_context<Person>("donald_trump"),
+                when => I_evaluate_context_with_filter(filter),
+                then => Evaluation_results_should_be(true));
+        }
+        
+        [Scenario]
+        public void should_be_able_to_call_min_with_arg()
+        {
+            IConditionExpression filter = new AllOfExpression()
+            {
+                AllOf = new IConditionExpression[]
+                {
+                    new LeafExpression()
+                    {
+                        Left = "Children.Min(Age)",
                         Operator = Operator.Equals,
                         Right = "14"
                     }
@@ -233,6 +321,29 @@ I want to have built-in functions in rule expression")]
                         Left = "Children.Select(FirstName)",
                         Operator = Operator.AllIn,
                         Right = "Tiffany,Barron"
+                    }
+                }
+            };
+            
+            Runner.RunScenario(
+                given => An_evaluation_context<Person>("donald_trump"),
+                when => I_evaluate_context_with_filter(filter),
+                then => Evaluation_results_should_be(true));
+        }
+        
+        [Scenario]
+        public void should_be_able_to_call_function_ago()
+        {
+            IConditionExpression filter = new AllOfExpression()
+            {
+                AllOf = new IConditionExpression[]
+                {
+                    new LeafExpression()
+                    {
+                        Left = "BirthDate",
+                        Operator = Operator.GreaterThan,
+                        Right = "Ago(50000d)",
+                        RightSideIsExpression = true
                     }
                 }
             };

@@ -6,27 +6,28 @@
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace Rules.Expressions
+namespace Rules.Expressions.FunctionExpression
 {
     using System;
     using System.Linq;
     using System.Linq.Expressions;
     using System.Reflection;
 
-    public class SelectExpression
+    public class SelectExpression : FunctionExpression
     {
         private readonly MethodInspect callInfo;
         private readonly Expression parent;
         private readonly string selectionPath;
 
-        public SelectExpression(Expression parent, string selectionPath)
+        public SelectExpression(Expression target, string selectionPath) 
+            : base(target, FunctionName.Select, selectionPath)
         {
-            this.parent = parent;
+            parent = target;
             this.selectionPath = selectionPath;
             callInfo = new MethodInspect("Select", parent.Type, typeof(string), typeof(Enumerable));
         }
 
-        public MethodCallExpression Create()
+        public override MethodCallExpression Create()
         {
             Type itemType;
             if (callInfo.TargetType.IsGenericType)

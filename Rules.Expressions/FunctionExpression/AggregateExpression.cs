@@ -6,14 +6,14 @@
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace Rules.Expressions
+namespace Rules.Expressions.FunctionExpression
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Linq.Expressions;
 
-    public class FunctionExpression
+    public class AggregateExpression : FunctionExpression
     {
         private readonly MethodInspect callInfo;
 
@@ -42,11 +42,11 @@ namespace Rules.Expressions
             new MethodInspect("Sum", typeof(decimal[]), typeof(decimal), typeof(Enumerable))
         };
 
-        private readonly Expression target;
-
-        public FunctionExpression(Expression target, Type targetType, string methodName)
+        public AggregateExpression(Expression target, FunctionName funcName, string funcArg)
+            : base(target, funcName, funcArg)
         {
-            this.target = target;
+            var targetType = target.Type;
+            var methodName = funcName.ToString();
             callInfo = supportedMethods.FirstOrDefault(m =>
                 m.TargetType == targetType && m.MethodName.Equals(methodName, StringComparison.Ordinal));
             if (callInfo == null)
@@ -66,7 +66,7 @@ namespace Rules.Expressions
             if (callInfo == null) throw new NotSupportedException("Operator in condition is not supported for field type");
         }
 
-        public MethodCallExpression Create()
+        public override MethodCallExpression Create()
         {
             switch (callInfo.MethodName)
             {
@@ -77,13 +77,9 @@ namespace Rules.Expressions
                         callInfo.ExtensionType,
                         callInfo.MethodName,
                         new[] {callInfo.ArgumentType},
-                        target);
+                        Target);
                 default:
-                    return Expression.Call(
-                        callInfo.ExtensionType,
-                        callInfo.MethodName,
-                        null,
-                        target);
+                    return CreateAggregateFunction();
             }
         }
 
@@ -101,13 +97,41 @@ namespace Rules.Expressions
                 callInfo.ExtensionType,
                 "Distinct",
                 typeArgument,
-                target);
+                Target);
             var count = Expression.Call(
                 callInfo.ExtensionType,
                 "Count",
                 typeArgument,
                 distinct);
             return count;
+        }
+
+        private MethodCallExpression CreateAggregateFunction()
+        {
+            if (string.IsNullOrEmpty(FuncArg))
+            {
+                return Expression.Call(
+                    callInfo.ExtensionType,
+                    callInfo.MethodName,
+                    null,
+                    Target);    
+            }
+
+            var propInfo = callInfo.ArgumentType.GetProperty(FuncArg);
+            if (propInfo == null)
+            {
+                throw new InvalidOperationException($"unable to access property '{FuncArg}' on type '{callInfo.ArgumentType.Name}'");
+            }
+
+            var itemParameter = Expression.Parameter(callInfo.ArgumentType, "p");
+            var propAccess = Expression.MakeMemberAccess(itemParameter, propInfo);
+            var selectorExpr = Expression.Lambda(propAccess, itemParameter);
+            return Expression.Call(
+                callInfo.ExtensionType,
+                callInfo.MethodName,
+                new []{callInfo.ArgumentType},
+                Target,
+                selectorExpr);
         }
     }
 }
