@@ -28,6 +28,8 @@ namespace Rules.Expressions
 
         public bool RightSideIsExpression { get; set; }
 
+        public string[] OperatorArgs { get; set; }
+
         public Expression Process(ParameterExpression ctxExpression, Type parameterType)
         {
             var leftExpression = ctxExpression.BuildExpression(Left);
@@ -54,47 +56,24 @@ namespace Rules.Expressions
                     generatedExpression = Expression.Not(Expression.Equal(leftExpression, rightExpression));
                     break;
                 case Operator.GreaterThan:
-                    if (leftExpression.Type == typeof(DateTime))
-                    {
-                        generatedExpression = Expression.MakeBinary(ExpressionType.GreaterThan, leftExpression, rightExpression);
-                    }
-                    else
-                    {
-                        generatedExpression = Expression.GreaterThan(leftExpression, rightExpression);
-                    }
+                    generatedExpression = leftExpression.Type == typeof(DateTime) 
+                        ? Expression.MakeBinary(ExpressionType.GreaterThan, leftExpression, rightExpression)
+                        : Expression.GreaterThan(leftExpression, rightExpression);
                     break;
                 case Operator.GreaterOrEqual:
-                    if (leftExpression.Type == typeof(DateTime))
-                    {
-                        generatedExpression = Expression.MakeBinary(ExpressionType.GreaterThanOrEqual, leftExpression, rightExpression);
-                    }
-                    else
-                    {
-                        generatedExpression = Expression.GreaterThanOrEqual(leftExpression, rightExpression);
-                    }
-
+                    generatedExpression = leftExpression.Type == typeof(DateTime)
+                        ? Expression.MakeBinary(ExpressionType.GreaterThanOrEqual, leftExpression, rightExpression)
+                        : Expression.GreaterThanOrEqual(leftExpression, rightExpression);
                     break;
                 case Operator.LessThan:
-                    if (leftExpression.Type == typeof(DateTime))
-                    {
-                        generatedExpression = Expression.MakeBinary(ExpressionType.LessThan, leftExpression, rightExpression);
-                    }
-                    else
-                    {
-                        generatedExpression = Expression.LessThan(leftExpression, rightExpression);
-                    }
-
+                    generatedExpression = leftExpression.Type == typeof(DateTime)
+                        ? Expression.MakeBinary(ExpressionType.LessThan, leftExpression, rightExpression)
+                        : Expression.LessThan(leftExpression, rightExpression);
                     break;
                 case Operator.LessOrEqual:
-                    if (leftExpression.Type == typeof(DateTime))
-                    {
-                        generatedExpression = Expression.MakeBinary(ExpressionType.LessThanOrEqual, leftExpression, rightExpression);
-                    }
-                    else
-                    {
-                        generatedExpression = Expression.LessThanOrEqual(leftExpression, rightExpression);
-                    }
-
+                    generatedExpression = leftExpression.Type == typeof(DateTime)
+                        ? Expression.MakeBinary(ExpressionType.LessThanOrEqual, leftExpression, rightExpression)
+                        : Expression.LessThanOrEqual(leftExpression, rightExpression);
                     break;
                 case Operator.Contains:
                     generatedExpression = new ContainsCall(leftExpression, rightExpression).Create();
@@ -143,6 +122,9 @@ namespace Rules.Expressions
                     break;
                 case Operator.NotIsEmpty:
                     generatedExpression = Expression.Not(new IsEmptyCall(leftExpression, rightExpression).Create());
+                    break;
+                case Operator.DiffWithinPct:
+                    generatedExpression = new DiffWithinPctCall(leftExpression, rightExpression, OperatorArgs).Create();
                     break;
                 default:
                     throw new NotSupportedException($"operation {Operator} is not supported");

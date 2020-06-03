@@ -12,6 +12,7 @@ namespace Rules.Expressions
     using System.Linq;
     using System.Linq.Expressions;
     using System.Text.RegularExpressions;
+    using FunctionExpression;
 
     public static class ExpressionBuilderExtension
     {
@@ -100,22 +101,22 @@ namespace Rules.Expressions
             out Expression functionExpression)
         {
             functionExpression = null;
-            if (field.EndsWith("()"))
+            var functionRegexPatterns = FunctionNameExtension.GetFunctionNameRegexPatterns();
+            foreach (var pattern in functionRegexPatterns)
             {
-                var functionName = field.Substring(0, field.Length - "()".Length);
-                var funcExpr = new FunctionExpression(parentExpression, parentExpression.Type, functionName);
-                functionExpression = funcExpr.Create();
-                return true;
+                var regex = new Regex(pattern);
+                var match = regex.Match(field);
+                if (match.Success)
+                {
+                    var functionName = match.Groups[1].Value;
+                    var functionArg = match.Groups[2].Value;
+                    var funcName = (FunctionName)Enum.Parse(typeof(FunctionName), functionName);
+                    var funcExpr = new FunctionExpressionCreator().Create(parentExpression, funcName, functionArg);
+                    functionExpression = funcExpr.Create();
+                    return true;
+                }
             }
-
-            var selectFuncRegex = new Regex(@"Select\(([^\(\)]+)\)", RegexOptions.IgnoreCase);
-            if (selectFuncRegex.IsMatch(field))
-            {
-                var selectFunc = new SelectExpression(parentExpression, selectFuncRegex.Match(field).Groups[1].Value);
-                functionExpression = selectFunc.Create();
-                return true;
-            }
-
+            
             return false;
         }
         
