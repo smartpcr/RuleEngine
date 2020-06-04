@@ -19,17 +19,22 @@ namespace Rules.Expressions.FunctionExpression
         private readonly Expression parent;
         private readonly string selectionPath;
 
-        public SelectExpression(Expression target, string selectionPath) 
-            : base(target, FunctionName.Select, selectionPath)
+        public SelectExpression(Expression target, params string[] args) 
+            : base(target, FunctionName.Select, args)
         {
+            if (args == null || args.Length != 1)
+            {
+                throw new ArgumentException($"Exactly one argument is required for function '{FunctionName.Select}'");
+            }
+            
             parent = target;
-            this.selectionPath = selectionPath;
+            selectionPath = args[0];
             callInfo = new MethodInspect("Select", parent.Type, typeof(string), typeof(Enumerable));
         }
 
-        public override MethodCallExpression Create()
+        public override Expression Build()
         {
-            Type itemType;
+            Type itemType = null;
             if (callInfo.TargetType.IsGenericType)
             {
                 itemType = callInfo.TargetType.GetGenericArguments()[0];    
@@ -38,7 +43,8 @@ namespace Rules.Expressions.FunctionExpression
             {
                 itemType = callInfo.TargetType.GetElementType();
             }
-            else
+            
+            if (itemType == null)
             {
                 throw new InvalidOperationException($"target type '{callInfo.TargetType.Name}' of select function is not supported");
             }

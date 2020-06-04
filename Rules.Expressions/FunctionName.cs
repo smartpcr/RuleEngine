@@ -64,6 +64,20 @@ namespace Rules.Expressions
         Where,
         
         /// <summary>
+        /// First(fieldName, operator, fieldValue)
+        /// fieldName is prop name
+        /// operator can only be binary: equals, notEquals, greaterThan, greaterOrEqual, lessThan, lessOrEqual
+        /// fieldValue must be constant
+        /// </summary>
+        First,
+        
+        Last,
+        
+        OrderBy,
+        
+        OrderByDesc,
+        
+        /// <summary>
         /// Traverse(propName, idPropName, steps)
         /// propName: must return instance of the same type
         /// idPropName: unique prop of type string, helps tracking loops

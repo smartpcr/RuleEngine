@@ -47,7 +47,7 @@ namespace Rules.Expressions.FunctionExpression
             }
         }
 
-        public override MethodCallExpression Create()
+        public override Expression Build()
         {
             var now = Expression.Constant(DateTime.UtcNow);
             var spanExpr = Expression.Constant(span);

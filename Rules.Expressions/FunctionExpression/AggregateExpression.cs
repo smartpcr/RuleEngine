@@ -16,6 +16,7 @@ namespace Rules.Expressions.FunctionExpression
     public class AggregateExpression : FunctionExpression
     {
         private readonly MethodInspect callInfo;
+        private readonly string selectionPath;
 
         private readonly MethodInspect[] supportedMethods =
         {
@@ -42,9 +43,10 @@ namespace Rules.Expressions.FunctionExpression
             new MethodInspect("Sum", typeof(decimal[]), typeof(decimal), typeof(Enumerable))
         };
 
-        public AggregateExpression(Expression target, FunctionName funcName, string funcArg)
-            : base(target, funcName, funcArg)
+        public AggregateExpression(Expression target, FunctionName funcName, params string[] args)
+            : base(target, funcName, args)
         {
+            selectionPath = args != null && args.Length > 0 ? args[0] : null;
             var targetType = target.Type;
             var methodName = funcName.ToString();
             callInfo = supportedMethods.FirstOrDefault(m =>
@@ -66,7 +68,7 @@ namespace Rules.Expressions.FunctionExpression
             if (callInfo == null) throw new NotSupportedException("Operator in condition is not supported for field type");
         }
 
-        public override MethodCallExpression Create()
+        public override Expression Build()
         {
             switch (callInfo.MethodName)
             {
@@ -108,7 +110,7 @@ namespace Rules.Expressions.FunctionExpression
 
         private MethodCallExpression CreateAggregateFunction()
         {
-            if (string.IsNullOrEmpty(FuncArg))
+            if (string.IsNullOrEmpty(selectionPath))
             {
                 return Expression.Call(
                     callInfo.ExtensionType,
@@ -117,10 +119,10 @@ namespace Rules.Expressions.FunctionExpression
                     Target);    
             }
 
-            var propInfo = callInfo.ArgumentType.GetProperty(FuncArg);
+            var propInfo = callInfo.ArgumentType.GetProperty(selectionPath);
             if (propInfo == null)
             {
-                throw new InvalidOperationException($"unable to access property '{FuncArg}' on type '{callInfo.ArgumentType.Name}'");
+                throw new InvalidOperationException($"unable to access property '{selectionPath}' on type '{callInfo.ArgumentType.Name}'");
             }
 
             var itemParameter = Expression.Parameter(callInfo.ArgumentType, "p");

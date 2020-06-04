@@ -28,6 +28,14 @@ namespace Rules.Expressions.FunctionExpression
                     return new SelectExpression(target, args);
                 case FunctionName.Ago:
                     return new AgoExpression(target, funcName, args);
+                case FunctionName.Where:
+                    return new WhereExpression(target, funcName, args);
+                case FunctionName.First:
+                    return new FirstExpression(target, funcName, args);
+                case FunctionName.Last:
+                    return new LastExpression(target, funcName, args);
+                case FunctionName.Traverse:
+                    return new TraverseExpression(target, funcName, args);
                 default:
                     throw new NotImplementedException();
             }
@@ -47,6 +55,6 @@ namespace Rules.Expressions.FunctionExpression
             Args = args;
         }
 
-        public abstract MethodCallExpression Create();
+        public abstract Expression Build();
     }
 }

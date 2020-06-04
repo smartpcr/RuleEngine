@@ -47,6 +47,11 @@ namespace Rules.Expressions.Tests
                 var lambda = builder.Build<Person>(conditionExpression);
                 actual = lambda(person);
             }
+            else if (evaluationContext is TreeNode treeNode)
+            {
+                var lambda = builder.Build<TreeNode>(conditionExpression);
+                actual = lambda(treeNode);
+            }
             else
             {
                 Assert.Fail($"context type '{evaluationContext.GetType().Name}' is not supported");

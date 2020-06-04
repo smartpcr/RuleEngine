@@ -353,5 +353,181 @@ I want to have built-in functions in rule expression")]
                 when => I_evaluate_context_with_filter(filter),
                 then => Evaluation_results_should_be(true));
         }
+        
+        [Scenario]
+        public void should_be_able_to_call_function_where()
+        {
+            IConditionExpression filter = new AllOfExpression()
+            {
+                AllOf = new IConditionExpression[]
+                {
+                    new LeafExpression()
+                    {
+                        Left = "Children.Where(FirstName, Equals, Tiffany).Count()",
+                        Operator = Operator.Equals,
+                        Right = "1"
+                    }
+                }
+            };
+            
+            Runner.RunScenario(
+                given => An_evaluation_context<Person>("donald_trump"),
+                when => I_evaluate_context_with_filter(filter),
+                then => Evaluation_results_should_be(true));
+        }
+        
+        [Scenario]
+        public void should_be_able_to_call_function_first()
+        {
+            IConditionExpression filter = new AllOfExpression()
+            {
+                AllOf = new IConditionExpression[]
+                {
+                    new LeafExpression()
+                    {
+                        Left = "Children.First(FirstName, Equals, Tiffany).Age",
+                        Operator = Operator.GreaterThan,
+                        Right = "25"
+                    }
+                }
+            };
+            
+            Runner.RunScenario(
+                given => An_evaluation_context<Person>("donald_trump"),
+                when => I_evaluate_context_with_filter(filter),
+                then => Evaluation_results_should_be(true));
+        }
+        
+        [Scenario]
+        public void should_be_able_to_call_first_with_no_arg()
+        {
+            IConditionExpression filter = new AllOfExpression()
+            {
+                AllOf = new IConditionExpression[]
+                {
+                    new LeafExpression()
+                    {
+                        Left = "Hobbies.First()",
+                        Operator = Operator.Equals,
+                        Right = "Golf"
+                    }
+                }
+            };
+            
+            Runner.RunScenario(
+                given => An_evaluation_context<Person>("donald_trump"),
+                when => I_evaluate_context_with_filter(filter),
+                then => Evaluation_results_should_be(true));
+        }
+        
+        [Scenario]
+        public void should_be_able_to_call_function_last()
+        {
+            IConditionExpression filter = new AllOfExpression()
+            {
+                AllOf = new IConditionExpression[]
+                {
+                    new LeafExpression()
+                    {
+                        Left = "Children.Last(FirstName, Equals, Tiffany).Age",
+                        Operator = Operator.GreaterThan,
+                        Right = "14"
+                    }
+                }
+            };
+            
+            Runner.RunScenario(
+                given => An_evaluation_context<Person>("donald_trump"),
+                when => I_evaluate_context_with_filter(filter),
+                then => Evaluation_results_should_be(true));
+        }
+        
+        [Scenario]
+        public void should_be_able_to_call_last_with_no_arg()
+        {
+            IConditionExpression filter = new AllOfExpression()
+            {
+                AllOf = new IConditionExpression[]
+                {
+                    new LeafExpression()
+                    {
+                        Left = "Hobbies.Last()",
+                        Operator = Operator.In,
+                        Right = "Golf,Tweeter"
+                    }
+                }
+            };
+            
+            Runner.RunScenario(
+                given => An_evaluation_context<Person>("donald_trump"),
+                when => I_evaluate_context_with_filter(filter),
+                then => Evaluation_results_should_be(true));
+        }
+        
+        [Scenario]
+        public void should_be_able_traverse_along_link()
+        {
+            IConditionExpression filter = new AllOfExpression()
+            {
+                AllOf = new IConditionExpression[]
+                {
+                    new LeafExpression()
+                    {
+                        Left = "Traverse(Parent, Id)",
+                        Operator = Operator.AllIn,
+                        Right = "A,B,C"
+                    }
+                }
+            };
+            
+            Runner.RunScenario(
+                given => An_evaluation_context<TreeNode>("correct_tree"),
+                when => I_evaluate_context_with_filter(filter),
+                then => Evaluation_results_should_be(true));
+        }
+        
+        [Scenario]
+        public void should_stop_traverse_before_max_steps_reached()
+        {
+            IConditionExpression filter = new AllOfExpression()
+            {
+                AllOf = new IConditionExpression[]
+                {
+                    new LeafExpression()
+                    {
+                        Left = "Traverse(Parent, Id, 1)",
+                        Operator = Operator.AllIn,
+                        Right = "A,B"
+                    }
+                }
+            };
+            
+            Runner.RunScenario(
+                given => An_evaluation_context<TreeNode>("correct_tree"),
+                when => I_evaluate_context_with_filter(filter),
+                then => Evaluation_results_should_be(true));
+        }
+        
+        [Scenario]
+        public void should_stop_traverse_at_loop()
+        {
+            IConditionExpression filter = new AllOfExpression()
+            {
+                AllOf = new IConditionExpression[]
+                {
+                    new LeafExpression()
+                    {
+                        Left = "Traverse(Parent, Id)",
+                        Operator = Operator.ContainsAll,
+                        Right = "A,B,C"
+                    }
+                }
+            };
+            
+            Runner.RunScenario(
+                given => An_evaluation_context<TreeNode>("tree_with_loop"),
+                when => I_evaluate_context_with_filter(filter),
+                then => Evaluation_results_should_be(true));
+        }
     }
 }
