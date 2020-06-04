@@ -330,6 +330,28 @@ I want to have built-in functions in rule expression")]
                 when => I_evaluate_context_with_filter(filter),
                 then => Evaluation_results_should_be(true));
         }
+
+        [Scenario]
+        public void should_be_able_to_select_with_nested_function_inside()
+        {
+            IConditionExpression filter = new AllOfExpression()
+            {
+                AllOf = new IConditionExpression[]
+                {
+                    new LeafExpression()
+                    {
+                        Left = "Children.Select(Hobbies.OrderByDesc().First())",
+                        Operator = Operator.AllIn,
+                        Right = "Music,Soccer"
+                    }
+                }
+            };
+            
+            Runner.RunScenario(
+                given => An_evaluation_context<Person>("donald_trump"),
+                when => I_evaluate_context_with_filter(filter),
+                then => Evaluation_results_should_be(true));
+        }
         
         [Scenario]
         public void should_be_able_to_call_function_ago()
@@ -454,6 +476,50 @@ I want to have built-in functions in rule expression")]
                         Left = "Hobbies.Last()",
                         Operator = Operator.In,
                         Right = "Golf,Tweeter"
+                    }
+                }
+            };
+            
+            Runner.RunScenario(
+                given => An_evaluation_context<Person>("donald_trump"),
+                when => I_evaluate_context_with_filter(filter),
+                then => Evaluation_results_should_be(true));
+        }
+        
+        [Scenario]
+        public void should_be_able_to_call_orderby()
+        {
+            IConditionExpression filter = new AllOfExpression()
+            {
+                AllOf = new IConditionExpression[]
+                {
+                    new LeafExpression()
+                    {
+                        Left = "Children.OrderBy(FirstName).First().FirstName",
+                        Operator = Operator.Equals,
+                        Right = "Barron"
+                    }
+                }
+            };
+            
+            Runner.RunScenario(
+                given => An_evaluation_context<Person>("donald_trump"),
+                when => I_evaluate_context_with_filter(filter),
+                then => Evaluation_results_should_be(true));
+        }
+        
+        [Scenario]
+        public void should_be_able_to_call_orderbydesc()
+        {
+            IConditionExpression filter = new AllOfExpression()
+            {
+                AllOf = new IConditionExpression[]
+                {
+                    new LeafExpression()
+                    {
+                        Left = "Children.OrderByDesc(FirstName).First().FirstName",
+                        Operator = Operator.Equals,
+                        Right = "Tiffany"
                     }
                 }
             };

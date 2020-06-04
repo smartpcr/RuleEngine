@@ -84,11 +84,25 @@ namespace Rules.Expressions.Tests
                 var leftExpression = ctxParameter.BuildExpression(leafExpr.Left);
                 var lambda = Expression.Lambda(leftExpression, ctxParameter);
                 var getValue = lambda.Compile();
-                var evidenceObj = getValue.DynamicInvoke(instance);
-                if (evidenceObj != null)
+                var actualObj = getValue.DynamicInvoke(instance);
+
+                string expected = leafExpr.Right;
+                if (leafExpr.RightSideIsExpression)
                 {
-                    array.Add(JToken.FromObject(evidenceObj));
+                    var rightExpression = ctxParameter.BuildExpression(leafExpr.Right);
+                    lambda = Expression.Lambda(rightExpression, ctxParameter);
+                    getValue = lambda.Compile();
+                    var expectedObj = getValue.DynamicInvoke(instance);
+                    expected = JsonConvert.SerializeObject(expectedObj);
                 }
+
+                var evidence = new
+                {
+                    left = leafExpr.Left,
+                    actual = actualObj,
+                    expected
+                };
+                array.Add(JToken.FromObject(evidence));
             }
 
             return array;

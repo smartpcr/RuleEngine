@@ -50,13 +50,7 @@ namespace Rules.Expressions.FunctionExpression
             }
             
             var paramExpression = Expression.Parameter(itemType, "item");
-            var propNames = selectionPath.Split(new[] {'.'});
-            Expression propExpression = paramExpression;
-            foreach (var propName in propNames)
-            {
-                var prop = propExpression.Type.GetMappedProperty(propName);
-                propExpression = Expression.Property(propExpression, prop);
-            }
+            var propExpression = paramExpression.BuildExpression(selectionPath);
 
             Expression selectorExpression = Expression.Lambda(propExpression, paramExpression);
 

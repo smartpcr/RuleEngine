@@ -9,6 +9,7 @@
 namespace Rules.Expressions
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Linq.Expressions;
     using System.Text.RegularExpressions;
@@ -18,7 +19,7 @@ namespace Rules.Expressions
     {
         public static Expression BuildExpression(this ParameterExpression contextExpression, string propPath)
         {
-            var parts = propPath.Split(new[] {'.'});
+            var parts = SplitPropPath(propPath);
             Expression targetExpression = contextExpression;
             foreach (var part in parts)
             {
@@ -219,6 +220,85 @@ namespace Rules.Expressions
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// using "." as delimiter but skip anything inside parenthesis
+        /// note: there can be nested function inside another function
+        /// </summary>
+        /// <param name="propPath"></param>
+        /// <returns></returns>
+        public static string[] SplitPropPath(this string propPath)
+        {
+            var parts = new List<string>();
+            var left = propPath.IndexOf("(", 0, StringComparison.Ordinal);
+            if (left < 0)
+            {
+                return propPath.Split(new[] {'.'}, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(p => p.Trim()).ToArray();
+            }
+            
+            var stack = new Stack<int>();
+            var queue = new Queue<(int left, int right)>();
+            for (var i = 0; i < propPath.Length; i++)
+            {
+                var c = propPath[i];
+                if (c == '(')
+                {
+                    stack.Push(i);
+                }
+                else if (c == ')')
+                {
+                    left = stack.Pop();
+                    if (stack.Count == 0)
+                    {
+                        queue.Enqueue((left, i));
+                    }
+                }
+            }
+
+            if (stack.Count > 0)
+            {
+                throw new InvalidOperationException($"imbalanced expression found: '(' at {stack.Pop()} is not matched");
+            }
+
+            if (queue.Count <= 0)
+            {
+                throw new InvalidOperationException($"unable to capture any enclosed parenthesis");
+            }
+
+            var prevPos = 0;
+            while (queue.Count > 0)
+            {
+                var grouped = queue.Dequeue();
+                if (grouped.left > prevPos)
+                {
+                    var pathBeforeGroup = propPath.Substring(prevPos, grouped.left - prevPos);
+                    var partsBeforeGroup = pathBeforeGroup.Split(new[] {'.'}, StringSplitOptions.RemoveEmptyEntries);
+                    for (var i = 0; i < partsBeforeGroup.Length - 1; i++)
+                    {
+                        parts.Add(partsBeforeGroup[i]);
+                    }
+
+                    var funcName = partsBeforeGroup[partsBeforeGroup.Length - 1];
+                    var funcArgs = propPath.Substring(grouped.left, grouped.right + 1 - grouped.left);
+                    var funcDef = $"{funcName}{funcArgs}";
+                    parts.Add(funcDef);
+                    prevPos = grouped.right + 1;
+                }
+                else
+                {
+                    throw new InvalidOperationException($"missing function name at {grouped.left}");
+                }
+            }
+
+            if (prevPos < propPath.Length)
+            {
+                var pathAfterGroup = propPath.Substring(prevPos);
+                parts.AddRange(pathAfterGroup.Split(new []{'.'}, StringSplitOptions.RemoveEmptyEntries));
+            }
+            
+            return parts.ToArray();
         }
     }
 }

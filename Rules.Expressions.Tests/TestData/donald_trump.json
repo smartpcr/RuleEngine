@@ -16,12 +16,21 @@
     {
       "FirstName": "Tiffany",
       "LastName": "Trump",
-      "Age": 26
+      "Age": 26,
+      "Hobbies": [
+        "Arts",
+        "Music",
+        "Dancing"
+      ]
     },
     {
       "FirstName": "Barron",
       "LastName": "Trump",
-      "Age": 14
+      "Age": 14,
+      "Hobbies": [
+        "Soccer",
+        "Dancing"
+      ]
     }
   ],
   "Titles": [

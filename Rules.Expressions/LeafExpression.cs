@@ -126,6 +126,9 @@ namespace Rules.Expressions
                 case Operator.DiffWithinPct:
                     generatedExpression = new DiffWithinPctCall(leftExpression, rightExpression, OperatorArgs).Create();
                     break;
+                case Operator.AllInRangePct:
+                    generatedExpression = new AllInRangeCall(leftExpression, rightExpression, OperatorArgs).Create();
+                    break;
                 default:
                     throw new NotSupportedException($"operation {Operator} is not supported");
             }
@@ -159,6 +162,12 @@ namespace Rules.Expressions
                 case Operator.IsEmpty:
                 case Operator.NotIsEmpty:
                     return Expression.Constant(null, typeof(object));
+                case Operator.AllInRangePct:
+                    var decimalArray = Right.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries)
+                        .Select(s => s.Trim()).Select(decimal.Parse);
+                    var min = decimalArray.Min();
+                    var max = decimalArray.Max();
+                    return Expression.Constant(new decimal[]{min, max}, typeof(decimal[]));
                 default:
                     return Expression.Constant(leftSideType.ConvertValue(Right));
             }

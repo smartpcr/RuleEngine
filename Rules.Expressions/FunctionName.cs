@@ -98,7 +98,7 @@ namespace Rules.Expressions
         public static List<string> GetFunctionNameRegexPatterns()
         {
             var functionNames = GetAllFunctionNames();
-            return functionNames.Select(f => $@"^({f})\(([^\(\)]*)\)$").ToList();
+            return functionNames.Select(f => $@"^({f})\((.*)\)$").ToList();
         }
     }
 }

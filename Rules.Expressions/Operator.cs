@@ -32,6 +32,7 @@ namespace Rules.Expressions
         NotIsNull,
         IsEmpty,
         NotIsEmpty,
-        DiffWithinPct
+        DiffWithinPct,
+        AllInRangePct,
     }
 }

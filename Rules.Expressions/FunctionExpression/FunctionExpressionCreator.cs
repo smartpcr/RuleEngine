@@ -34,6 +34,10 @@ namespace Rules.Expressions.FunctionExpression
                     return new FirstExpression(target, funcName, args);
                 case FunctionName.Last:
                     return new LastExpression(target, funcName, args);
+                case FunctionName.OrderBy:
+                    return new OrderByExpression(target, funcName, args);
+                case FunctionName.OrderByDesc:
+                    return new OrderByDescExpression(target, funcName, args);
                 case FunctionName.Traverse:
                     return new TraverseExpression(target, funcName, args);
                 default:

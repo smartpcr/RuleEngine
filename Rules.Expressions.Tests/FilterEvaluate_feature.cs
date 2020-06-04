@@ -86,6 +86,15 @@ I want to evaluate rules against strongly typed context")]
         }
         
         [Scenario]
+        public void verify_context_with_all_in_filter_returns_true()
+        {
+            Runner.RunScenario(
+                given => An_evaluation_context<Person>("donald_trump"),
+                when => I_evaluate_context_with_condition("Hobbies", Operator.AllIn, "Golf,Tweeter"),
+                then => Evaluation_results_should_be(true));
+        }
+        
+        [Scenario]
         public void verify_context_with_null_field_filter_returns_false()
         {
             Runner.RunScenario(
@@ -346,6 +355,34 @@ I want to evaluate rules against strongly typed context")]
                         Right = "Children[1].Age",
                         RightSideIsExpression = true,
                         OperatorArgs = new []{"100"}
+                    },
+                    new LeafExpression()
+                    {
+                        Left = "Children.Count()",
+                        Operator = Operator.Equals,
+                        Right = "2"
+                    }
+                }
+            };
+            Runner.RunScenario(
+                given => An_evaluation_context<Person>("donald_trump"),
+                when => I_evaluate_context_with_filter(filter),
+                then => Evaluation_results_should_be(true));
+        }
+        
+        [Scenario]
+        public void verify_context_with_all_in_range_check()
+        {
+            IConditionExpression filter = new AllOfExpression()
+            {
+                AllOf = new IConditionExpression[]
+                {
+                    new LeafExpression()
+                    {
+                        Left = "Children.Select(Age)",
+                        Operator = Operator.AllInRangePct,
+                        Right = "15,25",
+                        OperatorArgs = new []{"10"}
                     },
                     new LeafExpression()
                     {
