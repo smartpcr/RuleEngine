@@ -8,12 +8,16 @@
 
 namespace Rules.Expressions.Tests
 {
+    using System.Collections.Generic;
+    using System.Linq.Expressions;
     using Contexts;
     using Evaluators;
     using LightBDD.Framework;
     using LightBDD.Framework.Parameters;
     using LightBDD.MsTest2;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
     using TestData;
 
     public partial class FunctionEvaluator_feature : FeatureFixture
@@ -37,27 +41,70 @@ namespace Rules.Expressions.Tests
         {
             var builder = new ExpressionBuilder();
             bool actual = false;
+            JArray evidence = null;
             if (evaluationContext is Location location)
             {
                 var lambda = builder.Build<Location>(conditionExpression);
                 actual = lambda(location);
+                evidence = GetEvidence(conditionExpression, location);
             }
             else if (evaluationContext is Person person)
             {
                 var lambda = builder.Build<Person>(conditionExpression);
                 actual = lambda(person);
+                evidence = GetEvidence(conditionExpression, person);
             }
             else if (evaluationContext is TreeNode treeNode)
             {
                 var lambda = builder.Build<TreeNode>(conditionExpression);
                 actual = lambda(treeNode);
+                evidence = GetEvidence(conditionExpression, treeNode);
             }
             else
             {
                 Assert.Fail($"context type '{evaluationContext.GetType().Name}' is not supported");
             }
 
+            if (evidence != null)
+            {
+                StepExecution.Current.Comment($"Evidence\n{evidence.FormatObject()}\n");
+            }
+
             expected.SetActual(actual);
+        }
+
+        private JArray GetEvidence<T>(IConditionExpression condition, T instance)
+        {
+            var leafEvaluators = new List<LeafExpression>();
+            PopulateLeafFieldEvaluators(condition, leafEvaluators);
+            var array = new JArray();
+            foreach(var leafExpr in leafEvaluators)
+            {
+                var ctxParameter = Expression.Parameter(typeof(T), "ctx");
+                var leftExpression = ctxParameter.BuildExpression(leafExpr.Left);
+                var lambda = Expression.Lambda(leftExpression, ctxParameter);
+                var getValue = lambda.Compile();
+                var evidenceObj = getValue.DynamicInvoke(instance);
+                if (evidenceObj != null)
+                {
+                    array.Add(JToken.FromObject(evidenceObj));
+                }
+            }
+
+            return array;
+        }
+        
+        private void PopulateLeafFieldEvaluators(IConditionExpression condition,
+            List<LeafExpression> leafEvaluators)
+        {
+            if (condition is LeafExpression leaf)
+                leafEvaluators.Add(leaf);
+            else if (condition is AllOfExpression allOf)
+                foreach (var leafExpr in allOf.AllOf)
+                    PopulateLeafFieldEvaluators(leafExpr, leafEvaluators);
+            else if (condition is AnyOfExpression anyOf)
+                foreach (var leafExpr in anyOf.AnyOf)
+                    PopulateLeafFieldEvaluators(leafExpr, leafEvaluators);
         }
     }
 }

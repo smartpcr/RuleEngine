@@ -18,7 +18,7 @@ namespace Rules.Expressions.FunctionExpression
     {
         private readonly PropertyInfo traverseProp;
         private readonly PropertyInfo uniqueProp;
-        private readonly int maxSteps = -1;
+        private readonly int maxStep = -1;
         
         public TraverseExpression(Expression target, FunctionName funcName, params string[] args) : base(target, funcName, args)
         {
@@ -43,72 +43,78 @@ namespace Rules.Expressions.FunctionExpression
             
             if (args.Length == 3)
             {
-                maxSteps = int.Parse(args[2]);
+                maxStep = int.Parse(args[2]);
             }
         }
 
         public override Expression Build()
         {
-			ParameterExpression parentParam = Expression.Parameter(Target.Type, "parent");
-			ParameterExpression pathVar = Expression.Variable(typeof(List<string>), "path");
-			ParameterExpression currentVar = Expression.Variable(Target.Type, "current");
-			ParameterExpression currentStepVar = Expression.Variable(typeof(int), "currentStep");
-			
-			ParameterExpression haveLoopVar = Expression.Variable(typeof(bool), "haveLoop");
-			MethodInfo addMethod = typeof(List<string>).GetMethod("Add");
-			var argumentTypes = new[] {typeof(IEnumerable<string>).GenericTypeArguments[0]};
-			LabelTarget label = Expression.Label(typeof(List<string>));
-	
-			var getTraversalPath = Expression.Block(
-				new[] { parentParam, pathVar, currentVar, currentStepVar, haveLoopVar },
-				Expression.Assign(pathVar, Expression.Constant(new List<string>())),
-				Expression.Assign(currentVar, Target),
-				Expression.Call(
-					pathVar,
-					addMethod,
-					Expression.Property(currentVar, uniqueProp)),
-				Expression.Assign(currentStepVar, Expression.Constant(1)),
-				Expression.Assign(haveLoopVar, Expression.Constant(false)),
-				Expression.Assign(parentParam, Expression.Property(currentVar, traverseProp)),
-				Expression.Loop(
-					Expression.IfThenElse(
-						Expression.AndAlso(
-							Expression.AndAlso(
-								Expression.IsFalse(haveLoopVar),
-								Expression.NotEqual(parentParam, Expression.Constant(null, typeof(object)))
-							),
-							Expression.OrElse(
-								Expression.LessThanOrEqual(Expression.Constant(maxSteps), Expression.Constant(0)),
-								Expression.LessThanOrEqual(currentStepVar, Expression.Constant(maxSteps))
-							)
-						),
-						Expression.Block(
-							Expression.Assign(currentVar, parentParam),
-							Expression.Assign(parentParam, Expression.Property(currentVar, traverseProp)),
-							Expression.IfThenElse(
-								Expression.Call(
-									typeof(Enumerable), 
-									"Contains", 
-									argumentTypes, 
-									pathVar, 
-									Expression.Property(currentVar, uniqueProp)),
-								Expression.Block(
-									Expression.Assign(haveLoopVar, Expression.Constant(true))),
-								Expression.Block(
-									Expression.Call(
-										pathVar,
-										addMethod,
-										Expression.Property(currentVar, uniqueProp)),
-									Expression.PostIncrementAssign(currentStepVar)
-								)
-							)
-						),
-						Expression.Break(label, pathVar)
-					), label
-				),
-				
-				pathVar // return
-			);
+            ParameterExpression parentParam = Expression.Parameter(Target.Type, "parent");
+            ParameterExpression pathVar = Expression.Variable(typeof(List<string>), "path");
+            ParameterExpression currentVar = Expression.Variable(Target.Type, "current");
+            ParameterExpression currentStepVar = Expression.Variable(typeof(int), "currentStep");
+            ParameterExpression haveLoopVar = Expression.Variable(typeof(bool), "haveLoop");
+            
+            var argumentTypes = new[] { typeof(IEnumerable<string>).GenericTypeArguments[0] };
+            MethodInfo addMethod = typeof(List<string>).GetMethod("Add");
+
+            LabelTarget label = Expression.Label(typeof(List<string>));
+
+            var getTraversalPath = Expression.Block(
+                new[] { parentParam, pathVar, currentVar, currentStepVar, haveLoopVar },
+                Expression.Assign(pathVar, Expression.Constant(new List<string>())),
+                Expression.Assign(currentVar, Target),
+                Expression.Call(
+                    pathVar,
+                    addMethod,
+                    Expression.Property(currentVar, uniqueProp)),
+                Expression.Assign(currentStepVar, Expression.Constant(0)),
+                Expression.Assign(haveLoopVar, Expression.Constant(false)),
+                Expression.Assign(parentParam, Expression.Property(currentVar, traverseProp)),
+                Expression.Loop(
+                    Expression.IfThenElse(
+                        Expression.AndAlso(
+                            Expression.AndAlso(
+                                Expression.IsFalse(haveLoopVar),
+                                Expression.NotEqual(parentParam, Expression.Constant(null, typeof(object)))
+                            ),
+                            Expression.OrElse(
+                                Expression.LessThanOrEqual(Expression.Constant(maxStep), Expression.Constant(0)),
+                                Expression.LessThan(currentStepVar, Expression.Constant(maxStep))
+                            )
+                        ),
+                        Expression.Block(
+                            Expression.PostIncrementAssign(currentStepVar),
+                            Expression.Assign(currentVar, parentParam),
+                            Expression.Assign(parentParam, Expression.Property(parentParam, traverseProp)),
+
+                            Expression.IfThenElse(
+                                Expression.Call(
+                                    typeof(Enumerable),
+                                    "Contains",
+                                    argumentTypes,
+                                    pathVar,
+                                    Expression.Property(currentVar, uniqueProp)),
+                                Expression.Block(
+                                    Expression.Assign(haveLoopVar, Expression.Constant(true)),
+                                    Expression.Call(
+                                        pathVar,
+                                        addMethod,
+                                        Expression.Constant("!!")) // indicates a loop
+                                ),
+                                Expression.Block(
+                                    Expression.Call(
+                                        pathVar,
+                                        addMethod,
+                                        Expression.Property(currentVar, uniqueProp))
+                                )
+                            )
+                        ),
+                        Expression.Break(label, pathVar)
+                    ), label
+                ),
+                pathVar // return
+            );
 
             return getTraversalPath;
         }

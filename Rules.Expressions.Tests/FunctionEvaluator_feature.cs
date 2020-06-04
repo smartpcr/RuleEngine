@@ -519,7 +519,7 @@ I want to have built-in functions in rule expression")]
                     {
                         Left = "Traverse(Parent, Id)",
                         Operator = Operator.ContainsAll,
-                        Right = "A,B,C"
+                        Right = "A,B,C,!!"
                     }
                 }
             };
