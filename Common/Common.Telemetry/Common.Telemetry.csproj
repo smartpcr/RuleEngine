@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Ensure.That" Version="8.2.0" />
+        <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.13.1" />
+        <PackageReference Include="Microsoft.ApplicationInsights.DependencyCollector" Version="2.13.1" />
+        <PackageReference Include="Microsoft.ApplicationInsights.Kubernetes" Version="1.1.1" />
+        <PackageReference Include="Microsoft.ApplicationInsights.Kubernetes.HostingStartup" Version="1.1.1" />
+        <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.13.1" />
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="3.1.2" />
+        <PackageReference Include="Microsoft.Extensions.Logging.ApplicationInsights" Version="2.13.1" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="3.1.2" />
+        <PackageReference Include="System.Text.Json" Version="4.7.0" />
+        
+        <PackageReference Include="Prometheus.Client" Version="3.1.0" />
+        <PackageReference Include="Prometheus.Client.AspNetCore" Version="3.1.0" />
+        <PackageReference Include="Prometheus.Client.HttpRequestDurations" Version="2.2.0" />
+        <PackageReference Include="Prometheus.Client.MetricPusher" Version="1.1.0" />
+        <PackageReference Include="Prometheus.Client.MetricServer" Version="3.1.0" />
+
+        <PackageReference Include="OpenTelemetry" Version="0.2.0-alpha.179" />
+        <PackageReference Include="OpenTelemetry.Collector.Dependencies" Version="0.2.0-alpha.179" />
+        <PackageReference Include="OpenTelemetry.Exporter.ApplicationInsights" Version="0.2.0-alpha.179" />
+<!--        <PackageReference Include="OpenTelemetry.Exporter.Jaeger" Version="0.2.0-alpha.151" />-->
+<!--        <PackageReference Include="OpenTelemetry.Exporter.Prometheus" Version="0.2.0-alpha.151" />-->
+<!--        <PackageReference Include="OpenTelemetry.Exporter.Zipkin" Version="0.2.0-alpha.151" />-->
+        <PackageReference Include="OpenTelemetry.Collector.AspNetCore" Version="0.2.0-alpha.179" />
+        <PackageReference Include="OpenTelemetry.Hosting" Version="0.2.0-alpha.179" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Folder Include="RuntimeTelemetry" />
+        <Folder Include="Tracers" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Common.Config\Common.Config.csproj" />
+    </ItemGroup>
+</Project>

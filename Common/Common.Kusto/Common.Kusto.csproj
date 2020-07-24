@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Azure.Identity" Version="1.1.1" />
+        <PackageReference Include="Microsoft.Azure.Kusto.Data" Version="8.1.0" />
+        <PackageReference Include="Microsoft.Azure.Kusto.Ingest" Version="8.1.0" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.1.3" />
+        <PackageReference Include="Microsoft.Extensions.Options" Version="3.1.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Common.Auth\Common.Auth.csproj" />
+        <ProjectReference Include="..\Common.KeyVault\Common.KeyVault.csproj" />
+    </ItemGroup>
+</Project>

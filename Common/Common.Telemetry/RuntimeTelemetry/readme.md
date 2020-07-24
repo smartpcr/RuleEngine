@@ -1,0 +1,1 @@
+the code was copied from [prometheus-net.DotNetRuntime](https://github.com/djluck/prometheus-net.DotNetRuntime) (created by __James Luck__) to support application insights
