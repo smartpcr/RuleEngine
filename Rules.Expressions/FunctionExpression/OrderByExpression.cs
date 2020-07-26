@@ -18,12 +18,15 @@ namespace Rules.Expressions.FunctionExpression
         
         public OrderByExpression(Expression target, FunctionName funcName, params string[] args) : base(target, funcName, args)
         {
-            if (args == null || args.Length != 1)
+            if (args != null && args.Length > 1)
             {
-                throw new ArgumentException($"exactly one argument expected for function '{funcName}'");
+                throw new ArgumentException($"exactly zero or one argument expected for function '{funcName}'");
             }
 
-            orderByField = args[0];
+            if (args?.Length == 1)
+            {
+                orderByField = args[0];
+            }
         }
 
         public override Expression Build()
@@ -43,8 +46,21 @@ namespace Rules.Expressions.FunctionExpression
                 throw new InvalidOperationException($"target type '{Target.Type.Name}' of select function is not supported");
             }
             
-            var prop = itemType.GetMappedProperty(orderByField);
             var argParameter = Expression.Parameter(itemType, "_");
+
+            if (string.IsNullOrEmpty(orderByField))
+            {
+                var selector = Expression.Lambda(argParameter, argParameter);
+                
+                return Expression.Call(
+                    typeof(Enumerable),
+                    "OrderBy",
+                    new []{itemType, itemType},
+                    Target,
+                    selector);
+            }
+            
+            var prop = itemType.GetMappedProperty(orderByField);
             var propExpression = Expression.Property(argParameter, prop);
             Expression selectorExpression = Expression.Lambda(propExpression, argParameter);
             

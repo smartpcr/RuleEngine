@@ -10,6 +10,7 @@ namespace Rules.Expressions.Tests.Contexts
 {
     using System;
     using System.Collections.Generic;
+    using System.Runtime.CompilerServices;
 
     public class Person
     {
@@ -41,5 +42,18 @@ namespace Rules.Expressions.Tests.Contexts
         Asian,
         Hispanic,
         NativeIndian
+    }
+
+    public static class PersonExtension
+    {
+        public static bool IsPresident(this Person person)
+        {
+            return person.LastName == "Trump" && person.FirstName == "Donald";
+        }
+
+        public static bool IsAdult(this Person person, int ageThreshold)
+        {
+            return person.Age >= ageThreshold;
+        }
     }
 }

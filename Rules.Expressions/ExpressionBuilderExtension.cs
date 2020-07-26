@@ -12,8 +12,11 @@ namespace Rules.Expressions
     using System.Collections.Generic;
     using System.Linq;
     using System.Linq.Expressions;
+    using System.Reflection;
+    using System.Runtime.CompilerServices;
     using System.Text.RegularExpressions;
     using FunctionExpression;
+    using Rules.Expressions.Macros;
 
     public static class ExpressionBuilderExtension
     {
@@ -23,7 +26,9 @@ namespace Rules.Expressions
             Expression targetExpression = contextExpression;
             foreach (var part in parts)
             {
-                if (targetExpression.TryFindFunction(part, out var funcExpr))
+                if (targetExpression.TryFindMacro(part, out var macroExpr))
+                    targetExpression = macroExpr;
+                else if (targetExpression.TryFindFunction(part, out var funcExpr))
                     targetExpression = funcExpr;
                 else if (targetExpression.TryFindIndexerField(part, out var arrayItemExpr))
                     targetExpression = arrayItemExpr;
@@ -91,6 +96,118 @@ namespace Rules.Expressions
                 var nullExpr = Expression.Constant(null, typeof(object));
                 notNullCheckExpression = Expression.Not(Expression.Equal(targetExpression, nullExpr));
                 return true;
+            }
+            
+            return false;
+        }
+        
+        /// <summary>
+        /// using "." as delimiter but skip anything inside parenthesis
+        /// note: there can be nested function inside another function
+        /// </summary>
+        /// <param name="propPath"></param>
+        /// <returns></returns>
+        public static string[] SplitPropPath(this string propPath)
+        {
+            var parts = new List<string>();
+            var left = propPath.IndexOf("(", 0, StringComparison.Ordinal);
+            if (left < 0)
+            {
+                return propPath.Split(new[] {'.'}, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(p => p.Trim()).ToArray();
+            }
+            
+            var stack = new Stack<int>();
+            var queue = new Queue<(int left, int right)>();
+            for (var i = 0; i < propPath.Length; i++)
+            {
+                var c = propPath[i];
+                if (c == '(')
+                {
+                    stack.Push(i);
+                }
+                else if (c == ')')
+                {
+                    left = stack.Pop();
+                    if (stack.Count == 0)
+                    {
+                        queue.Enqueue((left, i));
+                    }
+                }
+            }
+
+            if (stack.Count > 0)
+            {
+                throw new InvalidOperationException($"imbalanced expression found: '(' at {stack.Pop()} is not matched");
+            }
+
+            if (queue.Count <= 0)
+            {
+                throw new InvalidOperationException($"unable to capture any enclosed parenthesis");
+            }
+
+            var prevPos = 0;
+            while (queue.Count > 0)
+            {
+                var grouped = queue.Dequeue();
+                if (grouped.left > prevPos)
+                {
+                    var pathBeforeGroup = propPath.Substring(prevPos, grouped.left - prevPos);
+                    var partsBeforeGroup = pathBeforeGroup.Split(new[] {'.'}, StringSplitOptions.RemoveEmptyEntries);
+                    for (var i = 0; i < partsBeforeGroup.Length - 1; i++)
+                    {
+                        parts.Add(partsBeforeGroup[i]);
+                    }
+
+                    var funcName = partsBeforeGroup[partsBeforeGroup.Length - 1];
+                    var funcArgs = propPath.Substring(grouped.left, grouped.right + 1 - grouped.left);
+                    var funcDef = $"{funcName}{funcArgs}";
+                    parts.Add(funcDef);
+                    prevPos = grouped.right + 1;
+                }
+                else
+                {
+                    throw new InvalidOperationException($"missing function name at {grouped.left}");
+                }
+            }
+
+            if (prevPos < propPath.Length)
+            {
+                var pathAfterGroup = propPath.Substring(prevPos);
+                parts.AddRange(pathAfterGroup.Split(new []{'.'}, StringSplitOptions.RemoveEmptyEntries));
+            }
+            
+            return parts.ToArray();
+        }
+        
+        private static bool TryFindMacro(
+            this Expression parentExpression,
+            string field,
+            out Expression macroExpression)
+        {
+            macroExpression = null;
+            
+            var methodRegex = new Regex(@"^(\w+)\(([^\(\)]*)\)$");
+            if (methodRegex.IsMatch(field))
+            {
+                var macroName = methodRegex.Match(field).Groups[1].Value;
+                var macroArgs = methodRegex.Match(field).Groups[2].Value;
+                var args = macroArgs.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries).Select(a => a.Trim()).ToArray();
+                var extensionMethods = GetExtensionMethods(parentExpression.Type);
+                if (extensionMethods?.Any() == true)
+                {
+                    var extensionMethod = extensionMethods.FirstOrDefault(m => m.Name == macroName);
+                    if (extensionMethod != null)
+                    {
+                        var methodParameters = extensionMethod.GetParameters();
+                        if (methodParameters.Length == args.Length + 1 && methodParameters[0].ParameterType == parentExpression.Type)
+                        {
+                            var macroCreator = new MacroExpressionCreator(parentExpression, extensionMethod, args);
+                            macroExpression = macroCreator.CreateMacroExpression();
+                            return true;    
+                        }
+                    }
+                }
             }
             
             return false;
@@ -222,83 +339,15 @@ namespace Rules.Expressions
             return false;
         }
 
-        /// <summary>
-        /// using "." as delimiter but skip anything inside parenthesis
-        /// note: there can be nested function inside another function
-        /// </summary>
-        /// <param name="propPath"></param>
-        /// <returns></returns>
-        public static string[] SplitPropPath(this string propPath)
+        private static IEnumerable<MethodInfo> GetExtensionMethods(Type extendedType)
         {
-            var parts = new List<string>();
-            var left = propPath.IndexOf("(", 0, StringComparison.Ordinal);
-            if (left < 0)
-            {
-                return propPath.Split(new[] {'.'}, StringSplitOptions.RemoveEmptyEntries)
-                    .Select(p => p.Trim()).ToArray();
-            }
-            
-            var stack = new Stack<int>();
-            var queue = new Queue<(int left, int right)>();
-            for (var i = 0; i < propPath.Length; i++)
-            {
-                var c = propPath[i];
-                if (c == '(')
-                {
-                    stack.Push(i);
-                }
-                else if (c == ')')
-                {
-                    left = stack.Pop();
-                    if (stack.Count == 0)
-                    {
-                        queue.Enqueue((left, i));
-                    }
-                }
-            }
-
-            if (stack.Count > 0)
-            {
-                throw new InvalidOperationException($"imbalanced expression found: '(' at {stack.Pop()} is not matched");
-            }
-
-            if (queue.Count <= 0)
-            {
-                throw new InvalidOperationException($"unable to capture any enclosed parenthesis");
-            }
-
-            var prevPos = 0;
-            while (queue.Count > 0)
-            {
-                var grouped = queue.Dequeue();
-                if (grouped.left > prevPos)
-                {
-                    var pathBeforeGroup = propPath.Substring(prevPos, grouped.left - prevPos);
-                    var partsBeforeGroup = pathBeforeGroup.Split(new[] {'.'}, StringSplitOptions.RemoveEmptyEntries);
-                    for (var i = 0; i < partsBeforeGroup.Length - 1; i++)
-                    {
-                        parts.Add(partsBeforeGroup[i]);
-                    }
-
-                    var funcName = partsBeforeGroup[partsBeforeGroup.Length - 1];
-                    var funcArgs = propPath.Substring(grouped.left, grouped.right + 1 - grouped.left);
-                    var funcDef = $"{funcName}{funcArgs}";
-                    parts.Add(funcDef);
-                    prevPos = grouped.right + 1;
-                }
-                else
-                {
-                    throw new InvalidOperationException($"missing function name at {grouped.left}");
-                }
-            }
-
-            if (prevPos < propPath.Length)
-            {
-                var pathAfterGroup = propPath.Substring(prevPos);
-                parts.AddRange(pathAfterGroup.Split(new []{'.'}, StringSplitOptions.RemoveEmptyEntries));
-            }
-            
-            return parts.ToArray();
+            var query = from type in extendedType.Assembly.GetTypes()
+                where type.IsSealed && !type.IsGenericType && !type.IsNested
+                from method in type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+                where method.IsDefined(typeof(ExtensionAttribute), false)
+                where method.GetParameters()[0].ParameterType == extendedType
+                select method;
+            return query;
         }
     }
 }

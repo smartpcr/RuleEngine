@@ -595,5 +595,49 @@ I want to have built-in functions in rule expression")]
                 when => I_evaluate_context_with_filter(filter),
                 then => Evaluation_results_should_be(true));
         }
+        
+        [Scenario]
+        public void should_be_able_to_call_macro()
+        {
+            IConditionExpression filter = new AllOfExpression()
+            {
+                AllOf = new IConditionExpression[]
+                {
+                    new LeafExpression()
+                    {
+                        Left = "IsPresident()",
+                        Operator = Operator.Equals,
+                        Right = "true"
+                    }
+                }
+            };
+            
+            Runner.RunScenario(
+                given => An_evaluation_context<Person>("donald_trump"),
+                when => I_evaluate_context_with_filter(filter),
+                then => Evaluation_results_should_be(true));
+        }
+        
+        [Scenario]
+        public void should_be_able_to_call_macro_with_args()
+        {
+            IConditionExpression filter = new AllOfExpression()
+            {
+                AllOf = new IConditionExpression[]
+                {
+                    new LeafExpression()
+                    {
+                        Left = "IsAdult(18)",
+                        Operator = Operator.Equals,
+                        Right = "true"
+                    }
+                }
+            };
+            
+            Runner.RunScenario(
+                given => An_evaluation_context<Person>("donald_trump"),
+                when => I_evaluate_context_with_filter(filter),
+                then => Evaluation_results_should_be(true));
+        }
     }
 }

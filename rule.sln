@@ -23,6 +23,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.Config", "Common\Com
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.Auth", "Common\Common.Auth\Common.Auth.csproj", "{2C834130-CAC2-4329-8FED-2129D7D43CCD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rules.Script", "Rules.Script\Rules.Script.csproj", "{28354337-FDBE-41AF-85DF-9C38AA739316}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -144,6 +146,18 @@ Global
 		{2C834130-CAC2-4329-8FED-2129D7D43CCD}.Release|x64.Build.0 = Release|Any CPU
 		{2C834130-CAC2-4329-8FED-2129D7D43CCD}.Release|x86.ActiveCfg = Release|Any CPU
 		{2C834130-CAC2-4329-8FED-2129D7D43CCD}.Release|x86.Build.0 = Release|Any CPU
+		{28354337-FDBE-41AF-85DF-9C38AA739316}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{28354337-FDBE-41AF-85DF-9C38AA739316}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{28354337-FDBE-41AF-85DF-9C38AA739316}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{28354337-FDBE-41AF-85DF-9C38AA739316}.Debug|x64.Build.0 = Debug|Any CPU
+		{28354337-FDBE-41AF-85DF-9C38AA739316}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{28354337-FDBE-41AF-85DF-9C38AA739316}.Debug|x86.Build.0 = Debug|Any CPU
+		{28354337-FDBE-41AF-85DF-9C38AA739316}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{28354337-FDBE-41AF-85DF-9C38AA739316}.Release|Any CPU.Build.0 = Release|Any CPU
+		{28354337-FDBE-41AF-85DF-9C38AA739316}.Release|x64.ActiveCfg = Release|Any CPU
+		{28354337-FDBE-41AF-85DF-9C38AA739316}.Release|x64.Build.0 = Release|Any CPU
+		{28354337-FDBE-41AF-85DF-9C38AA739316}.Release|x86.ActiveCfg = Release|Any CPU
+		{28354337-FDBE-41AF-85DF-9C38AA739316}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{4C931DDB-39F1-467D-81B0-995A62E68F1E} = {7B650264-76E5-4102-9CA1-D8AE57134DA7}

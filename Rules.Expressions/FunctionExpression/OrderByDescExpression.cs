@@ -23,7 +23,7 @@ namespace Rules.Expressions.FunctionExpression
                 throw new ArgumentException($"exactly zero or one argument expected for function '{funcName}'");
             }
 
-            if (args.Length == 1)
+            if (args?.Length == 1)
             {
                 orderByField = args[0];
             }
@@ -45,6 +45,7 @@ namespace Rules.Expressions.FunctionExpression
             {
                 throw new InvalidOperationException($"target type '{Target.Type.Name}' of select function is not supported");
             }
+            
             var argParameter = Expression.Parameter(itemType, "_");
 
             if (string.IsNullOrEmpty(orderByField))
