@@ -2,18 +2,22 @@
 
     <PropertyGroup>
         <TargetFramework>netcoreapp3.1</TargetFramework>
-        <RootNamespace>Rules.Engines</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="3.1.5" />
-      <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.1.5" />
-      <PackageReference Include="Microsoft.Extensions.Options" Version="3.1.5" />
+      <ProjectReference Include="..\..\Common\Common.Cache\Common.Cache.csproj" />
+      <ProjectReference Include="..\..\Common\Common.Kusto\Common.Kusto.csproj" />
+      <ProjectReference Include="..\..\Common\Common.Storage\Common.Storage.csproj" />
+      <ProjectReference Include="..\..\Common\Common.Telemetry\Common.Telemetry.csproj" />
+      <ProjectReference Include="..\..\Models\DataCenterHealth.Models\DataCenterHealth.Models.csproj" />
+      <ProjectReference Include="..\..\Models\DataCenterHealth.Repositories\DataCenterHealth.Repositories.csproj" />
+      <ProjectReference Include="..\Rules.Expressions\Rules.Expressions.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Common\Common.Config\Common.Config.csproj" />
-      <ProjectReference Include="..\Rules.Expressions\Rules.Expressions.csproj" />
+      <PackageReference Include="AsyncEnumerator" Version="4.0.2" />
+      <PackageReference Include="Ensure.That" Version="8.2.0" />
+      <PackageReference Include="ncrontab" Version="3.3.1" />
     </ItemGroup>
 
 </Project>

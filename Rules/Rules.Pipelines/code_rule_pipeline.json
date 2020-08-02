@@ -1,0 +1,137 @@
+{
+  "job": {
+    "ruleSetId": "",
+    "dcName": ""
+  },
+  "activities": [
+    {
+      "name": "producer",
+      "activity": "Rules.Validations.PowerDeviceProducer, Rules.Validations",
+      "type": "IPayloadProducer",
+      "input": null,
+      "output": "Rules.Validations.DeviceValidationPayload, Rules.Validations",
+      "config": {
+        "bufferSize": 1000,
+        "provider": "Rules.Validations.DeviceContextProvider, Rules.Validations",
+        "enrichments": [
+          "Rules.Validations.DeviceRelationEnricher, Rules.Validations"
+        ]
+      }
+    },
+    {
+      "name": "broadcast",
+      "activity": "Rules.Validations.PowerDevicePayloadBroadcast, Rules.Validations",
+      "type": "IPayloadBroadcast",
+      "input": "Rules.Validations.DeviceValidationPayload, Rules.Validations",
+      "output": "Rules.Validations.DeviceValidationPayload, Rules.Validations",
+      "config": {
+        "bufferSize": 1000,
+        "taskPoolSize": 8
+      }
+    },
+    {
+      "name": "sumOfCurrent",
+      "activity": "Rules.Validations.PowerDeviceSumOfCurrentEvaluator, Rules.Validations",
+      "type": "IPayloadTransformer",
+      "input": "Rules.Validations.DeviceValidationPayload, Rules.Validations",
+      "output": "Rules.Validations.DeviceValidationResult, Rules.Validations",
+      "config": {
+        "bufferSize": 1000,
+        "taskPoolSize": 8,
+        "score": {
+          "entity": "DataCenterHealth.Models.Rules.ValidationRule, DataCenterHealth.Models",
+          "expression": "ifExpression",
+          "true": "trueScore",
+          "false": "falseScore",
+          "missing": "missingScore",
+          "weight": "weight"
+        }
+      }
+    },
+    {
+      "name": "voltageComparer",
+      "activity": "Rules.Validations.PowerDeviceVoltageComparer, Rules.Validations",
+      "type": "IPayloadTransformer",
+      "input": "Rules.Validations.DeviceValidationPayload, Rules.Validations",
+      "output": "Rules.Validations.DeviceValidationResult, Rules.Validations",
+      "config": {
+        "bufferSize": 1000,
+        "taskPoolSize": 8,
+        "score": {
+          "entity": "DataCenterHealth.Models.Rules.ValidationRule, DataCenterHealth.Models",
+          "expression": "ifExpression",
+          "true": "trueScore",
+          "false": "falseScore",
+          "missing": "missingScore",
+          "weight": "weight"
+        }
+      }
+    },
+    {
+      "name": "batch1",
+      "activity": "Rules.Validations.PowerDeviceValidationResultBatcher, Rules.Validations",
+      "type": "IPayloadBatcher",
+      "input": "Rules.Validations.DeviceValidationResult, Rules.Validations",
+      "output": "Rules.Validations.DeviceValidationResult, Rules.Validations",
+      "config": {
+        "batchSize": 100
+      }
+    },
+    {
+      "name": "persistence1",
+      "activity": "Rules.Validations.PowerDeviceValidationResultToDb, Rules.Validations",
+      "type": "IPayloadPersistence",
+      "input": "Rules.Validations.DeviceValidationResult, Rules.Validations",
+      "output": null,
+      "config": {
+        "batchSize": 100
+      }
+    },
+    {
+      "name": "batch2",
+      "activity": "Rules.Validations.PowerDeviceValidationResultBatcher, Rules.Validations",
+      "type": "IPayloadBatcher",
+      "input": "Rules.Validations.DeviceValidationResult, Rules.Validations",
+      "output": "Rules.Validations.DeviceValidationResult, Rules.Validations",
+      "config": {
+        "batchSize": 100
+      }
+    },
+    {
+      "name": "persistence2",
+      "activity": "Rules.Validations.PowerDeviceValidationResultToDb, Rules.Validations",
+      "type": "IPayloadPersistence",
+      "input": "Rules.Validations.DeviceValidationResult, Rules.Validations",
+      "output": null,
+      "config": {
+        "batchSize": 100
+      }
+    }
+  ],
+  "pipeline": [
+    {
+      "from": "producer",
+      "to": ["broadcast"]
+    },
+    {
+      "from": "broadcast",
+      "to": ["sumOfCurrent", "voltageComparer"]
+    },
+    {
+      "from": "sumOfCurrent",
+      "to": ["batch1"]
+    },
+    {
+      "from": "batch1",
+      "to": ["persistence1"]
+    },
+    {
+      "from": "voltageComparer",
+      "to": ["batch2"]
+    },
+    {
+      "from": "batch2",
+      "to": ["persistence2"]
+    }
+  ]
+}

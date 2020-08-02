@@ -13,6 +13,7 @@ namespace Rules.Expressions.Parsers
     using Newtonsoft.Json.Converters;
     using Newtonsoft.Json.Linq;
     using Newtonsoft.Json.Serialization;
+    using Rules.Expressions;
 
     public class ExpressionParser
     {

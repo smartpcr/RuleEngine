@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="ExpressionEvaluator.cs" company="Microsoft Corporation">
+// <copyright file="ExpressionBuilder.cs" company="Microsoft Corporation">
 //   Copyright (c) 2020 Microsoft Corporation.  All rights reserved.
 // </copyright>
 // <summary>
@@ -10,17 +10,16 @@ namespace Rules.Expressions.Evaluators
 {
     using System;
     using System.Linq.Expressions;
-    using Newtonsoft.Json.Linq;
-    using Parsers;
+    using Rules.Expressions;
 
     public interface IExpressionBuilder
     {
         Func<T, bool> Build<T>(IConditionExpression conditionExpression) where T : class;
-        
+
         Delegate Build(IConditionExpression conditionExpression, Type contextType);
-        
+
     }
-    
+
     public class ExpressionBuilder : IExpressionBuilder
     {
         public Func<T, bool> Build<T>(IConditionExpression conditionExpression) where T : class

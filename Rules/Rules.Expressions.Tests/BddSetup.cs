@@ -21,11 +21,11 @@ namespace Rules.Expressions.Tests
         public static void Setup(TestContext testContext) { LightBddScope.Initialize(OnConfigure); }
         [AssemblyCleanup]
         public static void Cleanup() { LightBddScope.Cleanup(); }
-        
+
         /// <summary>
         /// This method allows to customize LightBDD behavior.
         /// The code below configures LightBDD to produce also a plain text report after all tests are done.
-        /// More information on what can be customized can be found on wiki: https://github.com/LightBDD/LightBDD/wiki/LightBDD-Configuration#configurable-lightbdd-features 
+        /// More information on what can be customized can be found on wiki: https://github.com/LightBDD/LightBDD/wiki/LightBDD-Configuration#configurable-lightbdd-features
         /// </summary>
         private static void OnConfigure(LightBddConfiguration configuration)
         {

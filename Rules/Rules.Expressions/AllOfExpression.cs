@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="CompoundExpression.cs" company="Microsoft Corporation">
+// <copyright file="AllOfExpression.cs" company="Microsoft Corporation">
 //   Copyright (c) 2020 Microsoft Corporation.  All rights reserved.
 // </copyright>
 // <summary>
@@ -16,12 +16,12 @@ namespace Rules.Expressions
     {
         [JsonProperty(Required = Required.Always)]
         public IConditionExpression[] AllOf { get; set; }
-        
+
         public Expression Process(ParameterExpression parameterExpression, Type parameterType)
         {
-            if (AllOf.Length == 0) throw new FormatException("Aggregated operators must have at least one child condition");
+            if (AllOf.Length == 0) throw new FormatException(Rules.Expressions.Resources.MissingChildConditionFormatException);
             if (AllOf.Length == 1) return AllOf[0].Process(parameterExpression, parameterType);
-            
+
             var expression = Expression.AndAlso(AllOf[0].Process(parameterExpression, parameterType),
                 AllOf[1].Process(parameterExpression, parameterType));
             for (var i = 2; i < AllOf.Length; i++)

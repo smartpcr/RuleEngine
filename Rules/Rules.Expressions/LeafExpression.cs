@@ -13,7 +13,8 @@ namespace Rules.Expressions
     using System.Linq.Expressions;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
-    using OperatorExpression;
+    using Rules.Expressions.Helpers;
+    using Rules.Expressions.Operators;
 
     public class LeafExpression : IConditionExpression
     {
@@ -21,7 +22,7 @@ namespace Rules.Expressions
         public string Left { get; set; }
 
         [JsonProperty(Required = Required.Always)]
-        [JsonConverter(typeof(StringEnumConverter))]
+        [JsonConverter(typeof(StringEnumConverter), true)]
         public Operator Operator { get; set; }
 
         public string Right { get; set; }
@@ -32,8 +33,12 @@ namespace Rules.Expressions
 
         public Expression Process(ParameterExpression ctxExpression, Type parameterType)
         {
-            var leftExpression = ctxExpression.BuildExpression(Left);
-            leftExpression = leftExpression.AddToStringWithEnumType().AddValueWithNullableNumberType();
+            var leftExpression = ctxExpression.BuildExpression(Left, false);
+            leftExpression = leftExpression.AddToStringWithEnumType();
+            if (Operator != Operator.IsNull && Operator != Operator.NotIsNull)
+            {
+                leftExpression = leftExpression.AddValueWithNullableNumberType();
+            }
             var leftSideType = leftExpression.Type;
             Expression rightExpression;
             if (RightSideIsExpression)
@@ -52,11 +57,11 @@ namespace Rules.Expressions
                 case Operator.Equals:
                     generatedExpression = Expression.Equal(leftExpression, rightExpression);
                     break;
-                case Expressions.Operator.NotEquals:
+                case Operator.NotEquals:
                     generatedExpression = Expression.Not(Expression.Equal(leftExpression, rightExpression));
                     break;
                 case Operator.GreaterThan:
-                    generatedExpression = leftExpression.Type == typeof(DateTime) 
+                    generatedExpression = leftExpression.Type == typeof(DateTime)
                         ? Expression.MakeBinary(ExpressionType.GreaterThan, leftExpression, rightExpression)
                         : Expression.GreaterThan(leftExpression, rightExpression);
                     break;
@@ -76,61 +81,74 @@ namespace Rules.Expressions
                         : Expression.LessThanOrEqual(leftExpression, rightExpression);
                     break;
                 case Operator.Contains:
-                    generatedExpression = new ContainsCall(leftExpression, rightExpression).Create();
+                    generatedExpression = new Contains(leftExpression, rightExpression).Create();
                     break;
                 case Operator.NotContains:
-                    generatedExpression = Expression.Not(new ContainsCall(leftExpression, rightExpression).Create());
+                    generatedExpression = Expression.Not(new Contains(leftExpression, rightExpression).Create());
                     break;
                 case Operator.ContainsAll:
-                    generatedExpression = new ContainsAllCall(leftExpression, rightExpression).Create();
+                    generatedExpression = new ContainsAll(leftExpression, rightExpression).Create();
                     break;
                 case Operator.NotContainsAll:
-                    generatedExpression = Expression.Not(new ContainsAllCall(leftExpression, rightExpression).Create());
+                    generatedExpression = Expression.Not(new ContainsAll(leftExpression, rightExpression).Create());
                     break;
                 case Operator.StartsWith:
-                    generatedExpression = new StartsWithCall(leftExpression, rightExpression).Create();
+                    generatedExpression = new StartsWith(leftExpression, rightExpression).Create();
                     break;
                 case Operator.NotStartsWith:
-                    generatedExpression = Expression.Not(new StartsWithCall(leftExpression, rightExpression).Create());
+                    generatedExpression = Expression.Not(new StartsWith(leftExpression, rightExpression).Create());
                     break;
                 case Operator.In:
-                    generatedExpression = new InCall(leftExpression, rightExpression).Create();
+                    generatedExpression = new In(leftExpression, rightExpression).Create();
                     break;
                 case Operator.NotIn:
-                    generatedExpression = Expression.Not(new InCall(leftExpression, rightExpression).Create());
+                    generatedExpression = Expression.Not(new In(leftExpression, rightExpression).Create());
                     break;
                 case Operator.AllIn:
-                    generatedExpression = new AllInCall(leftExpression, rightExpression).Create();
+                    generatedExpression = new AllIn(leftExpression, rightExpression).Create();
                     break;
                 case Operator.NotAllIn:
-                    generatedExpression = Expression.Not(new AllInCall(leftExpression, rightExpression).Create());
+                    generatedExpression = Expression.Not(new AllIn(leftExpression, rightExpression).Create());
                     break;
                 case Operator.AnyIn:
-                    generatedExpression = new AnyInCall(leftExpression, rightExpression).Create();
+                    generatedExpression = new AnyIn(leftExpression, rightExpression).Create();
                     break;
                 case Operator.NotAnyIn:
-                    generatedExpression = Expression.Not(new AnyInCall(leftExpression, rightExpression).Create());
+                    generatedExpression = Expression.Not(new AnyIn(leftExpression, rightExpression).Create());
                     break;
                 case Operator.IsNull:
+                    if (leftSideType.IsPrimitiveType() && Nullable.GetUnderlyingType(leftSideType) != null)
+                    {
+                        rightExpression = Expression.Constant(null, leftSideType);
+                    }
                     generatedExpression = Expression.Equal(leftExpression, rightExpression);
                     break;
                 case Operator.NotIsNull:
+                    if (leftSideType.IsPrimitiveType() && Nullable.GetUnderlyingType(leftSideType) != null)
+                    {
+                        rightExpression = Expression.Constant(null, leftSideType);
+                    }
                     generatedExpression = Expression.Not(Expression.Equal(leftExpression, rightExpression));
                     break;
                 case Operator.IsEmpty:
-                    generatedExpression = new IsEmptyCall(leftExpression, rightExpression).Create();
+                    generatedExpression = new IsEmpty(leftExpression, rightExpression).Create();
                     break;
                 case Operator.NotIsEmpty:
-                    generatedExpression = Expression.Not(new IsEmptyCall(leftExpression, rightExpression).Create());
+                    generatedExpression = Expression.Not(new IsEmpty(leftExpression, rightExpression).Create());
                     break;
                 case Operator.DiffWithinPct:
-                    generatedExpression = new DiffWithinPctCall(leftExpression, rightExpression, OperatorArgs).Create();
+                    generatedExpression = new DiffWithinPct(leftExpression, rightExpression, OperatorArgs).Create();
                     break;
                 case Operator.AllInRangePct:
-                    generatedExpression = new AllInRangeCall(leftExpression, rightExpression, OperatorArgs).Create();
+                    generatedExpression = new AllInRange(leftExpression, rightExpression, OperatorArgs).Create();
                     break;
                 default:
                     throw new NotSupportedException($"operation {Operator} is not supported");
+            }
+
+            if (Operator == Operator.IsNull || Operator == Operator.NotIsNull)
+            {
+                return generatedExpression;
             }
 
             return leftExpression.AddNotNullCheck(out var nullCheckExpression)
@@ -146,6 +164,8 @@ namespace Rules.Expressions
                 case Operator.NotContainsAll:
                 case Operator.AllIn:
                 case Operator.NotAllIn:
+                case Operator.AnyIn:
+                case Operator.NotAnyIn:
                     var stringArray = Right.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries)
                         .Select(s => s.Trim()).ToArray();
                     return Expression.Constant(stringArray, typeof(string[]));
@@ -167,7 +187,7 @@ namespace Rules.Expressions
                         .Select(s => s.Trim()).Select(decimal.Parse);
                     var min = decimalArray.Min();
                     var max = decimalArray.Max();
-                    return Expression.Constant(new decimal[]{min, max}, typeof(decimal[]));
+                    return Expression.Constant(new[]{min, max}, typeof(decimal[]));
                 default:
                     return Expression.Constant(leftSideType.ConvertValue(Right));
             }

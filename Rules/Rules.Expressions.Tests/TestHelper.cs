@@ -27,10 +27,12 @@ namespace Rules.Expressions.Tests
                 new StringEnumConverter {NamingStrategy = new CamelCaseNamingStrategy()},
             }
         };
-        
+
         public static string FormatObject(this object o)
         {
             return JsonConvert.SerializeObject(o, Formatting.Indented, serializerSettings);
         }
+
+
     }
 }

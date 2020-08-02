@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="MacroExpression.cs" company="Microsoft Corporation">
+// <copyright file="MacroExpressionCreator.cs" company="Microsoft Corporation">
 //   Copyright (c) 2020 Microsoft Corporation.  All rights reserved.
 // </copyright>
 // <summary>
@@ -10,10 +10,8 @@ namespace Rules.Expressions.Macros
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using System.Linq.Expressions;
     using System.Reflection;
-    using Newtonsoft.Json;
 
     public class MacroExpressionCreator
     {
@@ -33,7 +31,7 @@ namespace Rules.Expressions.Macros
             var inputParameters = macroMethod.GetParameters();
             if (inputParameters.Length == 1)
             {
-                return Expression.Call(null, macroMethod, parentExpression);    
+                return Expression.Call(null, macroMethod, parentExpression);
             }
 
             var argExpressions = new List<Expression>();

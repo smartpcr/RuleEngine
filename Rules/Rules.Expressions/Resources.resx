@@ -41,7 +41,7 @@
     <data name="WriteJsonNotImplementedException" xml:space="preserve">
     <value>Converter is not writable. Method should not be invoked</value>
   </data>
-    <data name="MissingChildConditionFormatException" xml:space="preserve">
+  <data name="MissingChildConditionFormatException" xml:space="preserve">
     <value>Aggregated operators must have at least one child condition</value>
   </data>
 </root>

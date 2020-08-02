@@ -11,6 +11,7 @@ namespace Rules.Expressions.Parsers
     using System;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
+    using Rules.Expressions;
 
     internal class ConditionExpressionConverter : JsonConverter
     {
