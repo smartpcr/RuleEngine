@@ -7,9 +7,9 @@
 
 namespace DataCenterHealth.Models.Devices
 {
-    using System;
     using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
+    using DataCenterHealth.Models.Validation;
     using Jobs;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
@@ -123,7 +123,18 @@ namespace DataCenterHealth.Models.Devices
         #endregion
         #endregion
 
-        #region validation
+        #region evaluation
+        [JsonIgnore]
+        public EvaluationContext EvaluationContext { get; set; }
+        [JsonIgnore]
+        public EvaluationResult EvaluationResult { get; set; }
+
+        public void AddEvaluationEvidence(DeviceValidationEvidence evidence)
+        {
+            EvaluationResult = EvaluationResult ?? new EvaluationResult();
+            EvaluationResult.Evidences = EvaluationResult.Evidences ?? new List<DeviceValidationEvidence>();
+            EvaluationResult.Evidences.Add(evidence);
+        }
         #endregion
 
         #region IRoutable multicast in producer

@@ -13,6 +13,7 @@
       <ProjectReference Include="..\..\Common\Common.DocDb\Common.DocDb.csproj" />
       <ProjectReference Include="..\..\Common\Common.Kusto\Common.Kusto.csproj" />
       <ProjectReference Include="..\..\Common\Common.Storage\Common.Storage.csproj" />
+      <ProjectReference Include="..\..\Common\Common.Telemetry\Common.Telemetry.csproj" />
     </ItemGroup>
 
 </Project>

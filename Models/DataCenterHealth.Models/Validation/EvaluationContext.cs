@@ -9,15 +9,19 @@ namespace DataCenterHealth.Models.Validation
     using System;
     using System.Collections.Generic;
     using System.Threading;
+    using Common.Telemetry;
     using DataCenterHealth.Models.DataTypes;
     using DataCenterHealth.Models.Devices;
     using DataCenterHealth.Models.Traversals;
+    using Microsoft.Extensions.Logging;
 
     public class EvaluationContext
     {
         public string DcName { get; }
         public string RunId { get; }
         public string JobId { get; }
+        public ILogger Logger { get; }
+        public IAppTelemetry AppTelemetry { get; }
         public List<string> EnabledDataCenters { get; set; }
         public Dictionary<string, PowerDevice> DeviceLookup { get; set; }
         public Dictionary<string, PowerDevice> RedundantDeviceLookup { get; set; }
@@ -27,11 +31,13 @@ namespace DataCenterHealth.Models.Validation
         public Dictionary<string, List<ZenonDataPoint>> ZenonDataPointLookup { get; set; }
         public DeviceHierarchyDeviceTraversal DeviceTraversal { get; set; }
 
-        public EvaluationContext(string dcName, string runId, string jobId)
+        public EvaluationContext(string dcName, string runId, string jobId, ILogger logger, IAppTelemetry appTelemetry)
         {
             DcName = dcName;
             RunId = runId;
             JobId = jobId;
+            Logger = logger;
+            AppTelemetry = appTelemetry;
             EnabledDataCenters = new List<string>();
             DeviceLookup = new Dictionary<string, PowerDevice>();
             RedundantDeviceLookup = new Dictionary<string, PowerDevice>();
