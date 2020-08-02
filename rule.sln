@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rules.Expressions", "Rules.Expressions\Rules.Expressions.csproj", "{7D234961-7B19-4C6C-8F5B-83D41993AAED}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rules.Expressions", "Rules\Rules.Expressions\Rules.Expressions.csproj", "{7D234961-7B19-4C6C-8F5B-83D41993AAED}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rules.Expressions.Tests", "Rules.Expressions.Tests\Rules.Expressions.Tests.csproj", "{5EF60014-A2AB-44F0-8ACB-EE150C72D4A4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rules.Expressions.Tests", "Rules\Rules.Expressions.Tests\Rules.Expressions.Tests.csproj", "{5EF60014-A2AB-44F0-8ACB-EE150C72D4A4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rules.Engines", "Rules.Engines\Rules.Engines.csproj", "{5A19A0DB-0E80-41D7-A2EE-7FD68E4E0AB7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rules.Pipelines", "Rules\Rules.Pipelines\Rules.Pipelines.csproj", "{5A19A0DB-0E80-41D7-A2EE-7FD68E4E0AB7}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{7B650264-76E5-4102-9CA1-D8AE57134DA7}"
 EndProject
@@ -23,7 +23,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.Config", "Common\Com
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.Auth", "Common\Common.Auth\Common.Auth.csproj", "{2C834130-CAC2-4329-8FED-2129D7D43CCD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rules.Script", "Rules.Script\Rules.Script.csproj", "{28354337-FDBE-41AF-85DF-9C38AA739316}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Rules", "Rules", "{454CECB8-259B-46B6-91E4-4F3C3832C879}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -146,18 +146,6 @@ Global
 		{2C834130-CAC2-4329-8FED-2129D7D43CCD}.Release|x64.Build.0 = Release|Any CPU
 		{2C834130-CAC2-4329-8FED-2129D7D43CCD}.Release|x86.ActiveCfg = Release|Any CPU
 		{2C834130-CAC2-4329-8FED-2129D7D43CCD}.Release|x86.Build.0 = Release|Any CPU
-		{28354337-FDBE-41AF-85DF-9C38AA739316}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{28354337-FDBE-41AF-85DF-9C38AA739316}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{28354337-FDBE-41AF-85DF-9C38AA739316}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{28354337-FDBE-41AF-85DF-9C38AA739316}.Debug|x64.Build.0 = Debug|Any CPU
-		{28354337-FDBE-41AF-85DF-9C38AA739316}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{28354337-FDBE-41AF-85DF-9C38AA739316}.Debug|x86.Build.0 = Debug|Any CPU
-		{28354337-FDBE-41AF-85DF-9C38AA739316}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{28354337-FDBE-41AF-85DF-9C38AA739316}.Release|Any CPU.Build.0 = Release|Any CPU
-		{28354337-FDBE-41AF-85DF-9C38AA739316}.Release|x64.ActiveCfg = Release|Any CPU
-		{28354337-FDBE-41AF-85DF-9C38AA739316}.Release|x64.Build.0 = Release|Any CPU
-		{28354337-FDBE-41AF-85DF-9C38AA739316}.Release|x86.ActiveCfg = Release|Any CPU
-		{28354337-FDBE-41AF-85DF-9C38AA739316}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{4C931DDB-39F1-467D-81B0-995A62E68F1E} = {7B650264-76E5-4102-9CA1-D8AE57134DA7}
@@ -166,5 +154,8 @@ Global
 		{89E05AE0-8E43-4C31-A196-A191C5BB13C3} = {7B650264-76E5-4102-9CA1-D8AE57134DA7}
 		{0D0BCF68-3FA2-474C-B5A4-C8CF46206BE8} = {7B650264-76E5-4102-9CA1-D8AE57134DA7}
 		{2C834130-CAC2-4329-8FED-2129D7D43CCD} = {7B650264-76E5-4102-9CA1-D8AE57134DA7}
+		{5A19A0DB-0E80-41D7-A2EE-7FD68E4E0AB7} = {454CECB8-259B-46B6-91E4-4F3C3832C879}
+		{7D234961-7B19-4C6C-8F5B-83D41993AAED} = {454CECB8-259B-46B6-91E4-4F3C3832C879}
+		{5EF60014-A2AB-44F0-8ACB-EE150C72D4A4} = {454CECB8-259B-46B6-91E4-4F3C3832C879}
 	EndGlobalSection
 EndGlobal
