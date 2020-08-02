@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="FluentValidation.AspNetCore" Version="8.6.2" />
+      <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Common\Common.DocDb\Common.DocDb.csproj" />
+      <ProjectReference Include="..\..\Common\Common.Kusto\Common.Kusto.csproj" />
+      <ProjectReference Include="..\..\Common\Common.Storage\Common.Storage.csproj" />
+    </ItemGroup>
+
+</Project>
