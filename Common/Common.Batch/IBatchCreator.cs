@@ -15,9 +15,9 @@ namespace Common.Batch
     public interface IBatchCreator<TField> where TField : IComparable
     {
         Task GenerateBatchesIfNotExist();
-        Task<int> GetTotalProcessed();
-        Task<int> GetTotalInProgress();
-        Task<int> GetTotalInQueue();
+        Task<long> GetTotalProcessed();
+        Task<long> GetTotalInProgress();
+        Task<long> GetTotalInQueue();
         Task<IEnumerable<Batch<TField>>> Pickup(string consumer, int count = 1);
         Task Fail(Batch<TField> batch);
         Task Succeed(Batch<TField> batch);

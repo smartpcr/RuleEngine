@@ -39,6 +39,9 @@ namespace Common.Auth
         public string ClientSecretFile { get; set; }
         public string ClientCertFile { get; set; }
 
+        public string ClientPwdSecretName { get; set; }
+        public string ClientCertSecretName { get; set; }
+
         public static AadSettings ForMicrosoftTenant(string appId)
         {
             return new AadSettings

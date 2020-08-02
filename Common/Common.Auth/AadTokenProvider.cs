@@ -24,6 +24,11 @@ namespace Common.Auth
             this.settings = settings;
         }
 
+        /// <summary>
+        /// based on aadSettings, use either client_cert or client_pwd to authenticate aad
+        /// </summary>
+        /// <param name="resource"></param>
+        /// <returns></returns>
         public async Task<string> GetAccessTokenAsync(string resource)
         {
             var authContext = new AuthenticationContext(settings.Authority);
@@ -45,7 +50,9 @@ namespace Common.Auth
             }
         }
 
-        public (string secret, X509Certificate2 cert) GetClientSecretOrCert()
+        public (string secret, X509Certificate2 cert) GetClientSecretOrCert(
+            Func<string, string> getSecretFromVault,
+            Func<string,X509Certificate2> getCertFromVault)
         {
             if (!string.IsNullOrEmpty(settings.ClientSecretFile))
             {
@@ -54,15 +61,33 @@ namespace Common.Auth
                 return (clientSecret, null);
             }
 
-            var clientCertFile = GetSecretOrCertFile(settings.ClientCertFile);
-            var certificate = new X509Certificate2(clientCertFile);
-            return (null, certificate);
+            if (!string.IsNullOrEmpty(settings.ClientCertFile))
+            {
+                var clientCertFile = GetSecretOrCertFile(settings.ClientCertFile);
+                var certificate = new X509Certificate2(clientCertFile);
+                return (null, certificate);
+            }
+
+            if (!string.IsNullOrEmpty(settings.ClientPwdSecretName) && getSecretFromVault != null)
+            {
+                var clientSecret = getSecretFromVault(settings.ClientPwdSecretName);
+                return (clientSecret, null);
+            }
+
+            if (!string.IsNullOrEmpty(settings.ClientCertSecretName) && getCertFromVault != null)
+            {
+                var clientCert = getCertFromVault(settings.ClientCertSecretName);
+                return (null, clientCert);
+            }
+
+            return (null, null);
         }
 
-        public (ClientSecretCredential secretCredential, ClientCertificateCredential certCredential)
-            GetClientCredential()
+        public (ClientSecretCredential secretCredential, ClientCertificateCredential certCredential) GetClientCredential(
+            Func<string, string> getSecretFromVault,
+            Func<string,X509Certificate2> getCertFromVault)
         {
-            var secretOrCert = GetClientSecretOrCert();
+            var secretOrCert = GetClientSecretOrCert(getSecretFromVault, getCertFromVault);
             if (secretOrCert.secret != null)
             {
                 var credential = new ClientSecretCredential(

@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Azure.Identity" Version="1.1.1" />
+        <PackageReference Include="Azure.Messaging.EventHubs" Version="5.0.1" />
+        <PackageReference Include="Azure.Messaging.EventHubs.Processor" Version="5.0.1" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.1.2" />
+        <PackageReference Include="Microsoft.Extensions.Options" Version="3.1.2" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Common.Auth\Common.Auth.csproj" />
+        <ProjectReference Include="..\Common.KeyVault\Common.KeyVault.csproj" />
+    </ItemGroup>
+</Project>

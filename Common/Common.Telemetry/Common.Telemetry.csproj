@@ -14,6 +14,10 @@
         <PackageReference Include="Microsoft.Extensions.Logging" Version="3.1.2" />
         <PackageReference Include="Microsoft.Extensions.Logging.ApplicationInsights" Version="2.13.1" />
         <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="3.1.2" />
+        <PackageReference Include="Microsoft.GenevaAgentChannel" Version="5.1.12440001" />
+        <PackageReference Include="Serilog.AspNetCore" Version="3.2.0" />
+        <PackageReference Include="Serilog.Sinks.ApplicationInsights" Version="3.1.0" />
+        <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
         <PackageReference Include="System.Text.Json" Version="4.7.0" />
         
         <PackageReference Include="Prometheus.Client" Version="3.1.0" />

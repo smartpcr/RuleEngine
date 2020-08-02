@@ -2,7 +2,9 @@ namespace Common.Kusto
 {
     using System;
     using System.Collections.Generic;
+    using System.Data;
     using System.Reflection;
+    using System.Reflection.Metadata.Ecma335;
     using global::Kusto.Cloud.Platform.Utils;
     using global::Kusto.Data.Common;
     using Newtonsoft.Json;
@@ -54,6 +56,16 @@ namespace Common.Kusto
             }
 
             return columnMappings;
+        }
+
+        public static T Value<T>(this IDataReader reader, string fieldName)
+        {
+            return reader[fieldName] == DBNull.Value ? default : (T) reader[fieldName];
+        }
+
+        public static T EnumValue<T>(this IDataReader reader, string fieldName)
+        {
+            return reader[fieldName] == DBNull.Value ? default : (T) Enum.Parse(typeof(T), reader.Value<string>(fieldName), true);
         }
 
         private static Type GetTypeWithNullableSupport(this Type type)

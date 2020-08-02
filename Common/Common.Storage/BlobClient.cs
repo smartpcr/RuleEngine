@@ -10,6 +10,7 @@ namespace Common.Storage
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.IO;
     using System.Linq;
     using System.Text;
@@ -20,6 +21,7 @@ namespace Common.Storage
     using Azure.Storage.Blobs.Specialized;
     using Config;
     using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
     using Microsoft.Extensions.Options;
     using Newtonsoft.Json;
@@ -32,17 +34,18 @@ namespace Common.Storage
         private readonly Func<string, BlobContainerClient> createClient;
 
         public BlobClient(
-            IConfiguration config,
+            IServiceProvider serviceProvider,
             ILoggerFactory loggerFactory,
             IOptions<BlobStorageSettings> blobStorageSettings)
         {
             logger = loggerFactory.CreateLogger<BlobClient>();
+            var config = serviceProvider.GetRequiredService<IConfiguration>();
             var settings = blobStorageSettings != null
                 ? blobStorageSettings.Value
                 : config.GetConfiguredSettings<BlobStorageSettings>();
             logger.LogInformation(
                 $"accessing blob (account={settings.Account}, container={settings.Container}) using default azure credential");
-            var factory = new BlobContainerFactory(config, loggerFactory, settings);
+            var factory = new BlobContainerFactory(serviceProvider, loggerFactory, settings);
             containerClient = factory.ContainerClient;
             blobService = factory.BlobService;
             createClient = factory.CreateContainerClient;
@@ -230,9 +233,12 @@ namespace Common.Storage
         public async Task Upsert(string blobName, byte[] content, CancellationToken token)
         {
             logger.LogInformation($"upsert blob: {blobName}, length: {content.Length}");
+            var stopwatch = Stopwatch.StartNew();
             var blobClient = containerClient.GetBlobClient(blobName);
             await blobClient.DeleteIfExistsAsync(cancellationToken: token);
             await blobClient.UploadAsync(new MemoryStream(content), token);
+            stopwatch.Stop();
+            logger.LogInformation($"it took {stopwatch.Elapsed} to upload {blobName} ({content.Length/1000}KB) to blob storage");
         }
 
         public async Task<string> DownloadAsync(string blobFolder, string blobName, string localFolder, CancellationToken cancellationToken)

@@ -10,12 +10,13 @@ namespace Common.Kusto
 {
     using System;
     using System.Collections.Generic;
+    using System.Data;
     using System.Threading;
     using System.Threading.Tasks;
 
     public interface IKustoClient : IDisposable
     {
-        Task<IEnumerable<T>> ExecuteQuery<T>(string query, CancellationToken cancellationToken = default);
+        Task<IEnumerable<T>> ExecuteQuery<T>(string query, TimeSpan timeout = default, CancellationToken cancellationToken = default);
 
         Task<(int Total, T LastRecord)> ExecuteQuery<T>(
             string query,
@@ -33,6 +34,8 @@ namespace Common.Kusto
         Task<IEnumerable<T>> ExecuteFunction<T>(string functionName, CancellationToken cancellationToken,
             params (string name, string value)[] parameters);
 
+        Task<IDataReader> ExecuteReader(string query);
+
         Task ExecuteFunction<T>(
             string functionName,
             (string name, string value)[] parameters,
@@ -40,10 +43,25 @@ namespace Common.Kusto
             CancellationToken cancellationToken = default,
             int batchSize = 100);
 
-        Task BulkInsert<T>(string tableName, IList<T> items, bool appendOnly, string idPropName, CancellationToken cancellationToken);
+        Task<int> BulkInsert<T>(string tableName, IList<T> items, IngestMode ingestMode, string idPropName, CancellationToken cancellationToken);
 
         Task<T> ExecuteScalar<T>(string query, string fieldName, CancellationToken cancel);
 
         Task DropTable(string tableName, CancellationToken cancel);
+
+        #region schema
+
+        Task<IEnumerable<KustoTable>> ListTables();
+
+        Task<IEnumerable<KustoFunction>> ListFunctions();
+
+        #endregion
+    }
+
+    public enum IngestMode
+    {
+        AppendOnly,
+        InsertNew,
+        Refresh
     }
 }

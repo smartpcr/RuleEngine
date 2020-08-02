@@ -33,7 +33,7 @@ namespace Common.Cache
             appTelemetry = serviceProvider.GetRequiredService<IAppTelemetry>();
             var configuration = serviceProvider.GetRequiredService<IConfiguration>();
             cacheSettings = configuration.GetConfiguredSettings<CacheSettings>();
-            blobClient = new BlobClient(configuration, loggerFactory,
+            blobClient = new BlobClient(serviceProvider, loggerFactory,
                 new OptionsWrapper<BlobStorageSettings>(cacheSettings.BlobCache));
         }
 
@@ -48,12 +48,14 @@ namespace Common.Cache
             var tokenInfo = await blobClient.GetBlobInfo(key, token);
             if (tokenInfo == null)
             {
+                logger.LogInformation($"blob cache miss: key={key}");
                 appTelemetry.RecordMetric("blob-cache-miss", 1, ("key", key));
                 return null;
             }
 
             if (tokenInfo.CreatedOn.Add(cacheSettings.TimeToLive) < DateTimeOffset.UtcNow)
             {
+                logger.LogInformation($"blob cache expired: key={key}");
                 appTelemetry.RecordMetric("blob-cache-expired", 1, ("key", key));
                 return null;
             }
@@ -65,6 +67,7 @@ namespace Common.Cache
 
             var bytes = await File.ReadAllBytesAsync(downloadedBlogFile, token);
             File.Delete(downloadedBlogFile);
+            logger.LogInformation($"blob cache downloaded: key={key}");
             return bytes;
         }
 

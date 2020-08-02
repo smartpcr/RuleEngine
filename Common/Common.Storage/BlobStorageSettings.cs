@@ -15,5 +15,14 @@ namespace Common.Storage
         public string ConnectionStringEnvName { get; set; }
         public string ConnectionStringSecretName { get; set; }
         public string ContainerEndpoint => $"https://{Account}.blob.core.windows.net/{Container}";
+        public StorageAuthMode AuthMode { get; set; } = StorageAuthMode.Msi;
+    }
+
+    public enum StorageAuthMode
+    {
+        Msi,
+        Spn,
+        SecretFromVault,
+        ConnStr
     }
 }

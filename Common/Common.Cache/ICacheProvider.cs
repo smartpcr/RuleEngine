@@ -27,6 +27,9 @@ namespace Common.Cache
             CancellationToken cancel = default) where T : class, new();
 
         Task Set<T>(string key, T item, CancellationToken cancel) where T : class, new();
-        Task ClearAll();
+
+        Task ClearAsync(string key, CancellationToken cancel);
+
+        Task ClearAll(CancellationToken cancel);
     }
 }

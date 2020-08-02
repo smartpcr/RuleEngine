@@ -17,5 +17,6 @@ namespace Common.Storage
         public int MaxDequeueCount { get; set; }
         public string DeadLetterQueueName { get; set; }
         public string AccountServiceUrl => $"https://{Account}.queue.core.windows.net";
+        public StorageAuthMode AuthMode { get; set; } = StorageAuthMode.Msi;
     }
 }

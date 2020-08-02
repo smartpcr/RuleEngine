@@ -11,6 +11,7 @@ namespace Common.Kusto
     using System;
     using System.Collections.Generic;
     using System.Data;
+    using System.Diagnostics;
     using System.IO;
     using System.Linq;
     using System.Reflection;
@@ -20,8 +21,10 @@ namespace Common.Kusto
     using global::Kusto.Data.Common;
     using global::Kusto.Ingest;
     using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
     using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
 
     public class KustoClient : IKustoClient
     {
@@ -31,25 +34,30 @@ namespace Common.Kusto
         private readonly ILogger<KustoClient> logger;
         private readonly ICslQueryProvider queryClient;
 
-        public KustoClient(IConfiguration configuration, ILoggerFactory loggerFactory,
+        public KustoClient(IServiceProvider serviceProvider, ILoggerFactory loggerFactory,
             KustoSettings kustoSettings = null)
         {
             logger = loggerFactory.CreateLogger<KustoClient>();
+            var configuration = serviceProvider.GetRequiredService<IConfiguration>();
             this.kustoSettings = kustoSettings ?? configuration.GetConfiguredSettings<KustoSettings>();
-            var clientFactory = new ClientFactory(configuration, kustoSettings);
+            var clientFactory = new KustoClientFactory(serviceProvider, kustoSettings);
             queryClient = clientFactory.QueryQueryClient;
             adminClient = clientFactory.AdminClient;
             ingestClient = clientFactory.IngestClient;
         }
 
-        public async Task<IEnumerable<T>> ExecuteQuery<T>(string query, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<T>> ExecuteQuery<T>(string query, TimeSpan timeout = default, CancellationToken cancellationToken = default)
         {
             logger.LogInformation($"kusto query:\n{query}");
+            var stopWatch = Stopwatch.StartNew();
             var reader = await queryClient.ExecuteQueryAsync(
                 kustoSettings.DbName,
                 query,
-                new ClientRequestProperties {ClientRequestId = Guid.NewGuid().ToString()});
-            return Read<T>(reader, cancellationToken);
+                GetClientRequestProps(timeout));
+            var records = Read<T>(reader, cancellationToken);
+            stopWatch.Stop();
+            logger.LogInformation($"it took {stopWatch.Elapsed} to query {records.Count()} records from kusto");
+            return records;
         }
 
         public async Task<(int Total, T LastRecord)> ExecuteQuery<T>(
@@ -61,28 +69,34 @@ namespace Common.Kusto
             var reader = await queryClient.ExecuteQueryAsync(
                 kustoSettings.DbName,
                 query,
-                new ClientRequestProperties {ClientRequestId = Guid.NewGuid().ToString()});
+                GetClientRequestProps());
             return await Read(reader, onBatchReceived, cancellationToken, batchSize);
         }
 
-        public async Task<(int Total, object LastRecord)> ExecuteQuery(Type entityType, string query, Func<IList<object>, CancellationToken, Task> onBatchReceived, CancellationToken cancellationToken = default,
+        public async Task<(int Total, object LastRecord)> ExecuteQuery(
+            Type entityType,
+            string query,
+            Func<IList<object>, CancellationToken, Task> onBatchReceived,
+            CancellationToken cancellationToken = default,
             int batchSize = 100)
         {
             var reader = await queryClient.ExecuteQueryAsync(
                 kustoSettings.DbName,
                 query,
-                new ClientRequestProperties() { ClientRequestId = Guid.NewGuid().ToString() });
+                GetClientRequestProps());
             return await Read(entityType, reader, onBatchReceived, cancellationToken, batchSize);
         }
 
-        public async Task<IEnumerable<T>> ExecuteFunction<T>(string functionName, CancellationToken cancellationToken,
+        public async Task<IEnumerable<T>> ExecuteFunction<T>(
+            string functionName,
+            CancellationToken cancellationToken,
             params (string name, string value)[] parameters)
         {
             var functionParameters = parameters.Select(p => new KeyValuePair<string, string>(p.name, p.value));
             var reader = await queryClient.ExecuteQueryAsync(
                 kustoSettings.DbName,
                 functionName,
-                new ClientRequestProperties(null, functionParameters) {ClientRequestId = Guid.NewGuid().ToString()});
+                GetClientRequestProps());
             return Read<T>(reader, cancellationToken);
         }
 
@@ -94,14 +108,14 @@ namespace Common.Kusto
             var reader = await queryClient.ExecuteQueryAsync(
                 kustoSettings.DbName,
                 functionName,
-                new ClientRequestProperties(null, functionParameters) {ClientRequestId = Guid.NewGuid().ToString()});
+                GetClientRequestProps());
             await Read(reader, onBatchReceived, cancellationToken, batchSize);
         }
 
-        public async Task BulkInsert<T>(
+        public async Task<int> BulkInsert<T>(
             string tableName,
             IList<T> items,
-            bool appendOnly,
+            IngestMode ingestMode,
             string idPropName,
             CancellationToken cancellationToken)
         {
@@ -116,13 +130,15 @@ namespace Common.Kusto
             };
 
             long totalSize = 0;
-            if (!appendOnly)
+            int itemChanged = 0;
+            if (ingestMode == IngestMode.InsertNew)
             {
                 var upserts = await CheckExistingRecords(tableName, items.ToList(), idPropName);
                 await using var memoryStream = new MemoryStream();
                 await using var writer = new StreamWriter(memoryStream);
                 if (upserts.inserts.Count > 0)
                 {
+                    itemChanged = upserts.inserts.Count;
                     foreach (var item in upserts.inserts)
                         await writer.WriteLineAsync(JsonConvert.SerializeObject(item));
                     await writer.FlushAsync();
@@ -133,6 +149,13 @@ namespace Common.Kusto
             }
             else
             {
+                if (ingestMode == IngestMode.Refresh)
+                {
+                    await DropTable(tableName, cancellationToken);
+                    await EnsureTable<T>(tableName);
+                }
+
+                itemChanged = items.Count;
                 await using var memoryStream = new MemoryStream();
                 await using var writer = new StreamWriter(memoryStream);
                 foreach (var item in items) await writer.WriteLineAsync(JsonConvert.SerializeObject(item));
@@ -142,23 +165,41 @@ namespace Common.Kusto
                 await ingestClient.IngestFromStreamAsync(memoryStream, props);
             }
 
-            logger.LogInformation($"ingested {items.Count} records to kuso table {tableName}, size: {totalSize} bytes");
+            logger.LogInformation($"ingested {itemChanged} records to kuso table {tableName}, size: {totalSize} bytes");
+            return itemChanged;
         }
 
         public async Task<T> ExecuteScalar<T>(string query, string fieldName, CancellationToken cancel)
         {
             logger.LogInformation($"kusto query:\n{query}");
+            try
+            {
+                var reader = await queryClient.ExecuteQueryAsync(
+                    kustoSettings.DbName,
+                    query,
+                    GetClientRequestProps());
+                if (reader.Read())
+                {
+                    return reader[fieldName] == DBNull.Value ? default : (T) reader[fieldName];
+                }
+                reader.Dispose();
+                return default;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, $"Failed to get last ingestion time: {ex.Message}");
+                return default;
+            }
+        }
+
+        public async Task<IDataReader> ExecuteReader(string query)
+        {
+            logger.LogInformation($"kusto query:\n{query}");
             var reader = await queryClient.ExecuteQueryAsync(
                 kustoSettings.DbName,
                 query,
-                new ClientRequestProperties {ClientRequestId = Guid.NewGuid().ToString()});
-            if (reader.Read())
-            {
-                return (T) reader[fieldName];
-            }
-            reader.Dispose();
-
-            return default(T);
+                GetClientRequestProps());
+            return reader;
         }
 
         public async Task DropTable(string tableName, CancellationToken cancel)
@@ -168,6 +209,92 @@ namespace Common.Kusto
             await adminClient.ExecuteControlCommandAsync(kustoSettings.DbName, showTableCmd);
             logger.LogInformation($"kusto table: {tableName} is dropped");
         }
+
+        #region schema
+        public async Task<IEnumerable<KustoTable>> ListTables()
+        {
+            var showTablesCmd = CslCommandGenerator.GenerateTablesShowCommand();
+            var reader = await adminClient.ExecuteControlCommandAsync(kustoSettings.DbName, showTablesCmd);
+            var tableNames = new List<string>();
+            while (reader.Read())
+            {
+                tableNames.Add(reader.GetString(0));
+            }
+            reader.Close();
+
+            var tables = new List<KustoTable>();
+            foreach (var tableName in tableNames)
+            {
+                logger.LogInformation($"reading schema for table {tableName}");
+                var showTblCmd = string.Format(".show table {0} schema as json", tableName);
+                reader = await adminClient.ExecuteControlCommandAsync(kustoSettings.DbName, showTblCmd);
+                if (reader.Read())
+                {
+                    var schemaJson = reader.GetString(1);
+                    var schema = JObject.Parse(schemaJson);
+                    var columns = new List<KustoColumn>();
+                    foreach (var column in schema.Value<JArray>("OrderedColumns"))
+                    {
+                        var columnName = column.Value<string>("Name");
+                        var columnType = Type.GetType(column.Value<string>("Type"));
+                        var cslType = column.Value<string>("CslType");
+                        columns.Add(new KustoColumn()
+                        {
+                            Name = columnName,
+                            Type = columnType,
+                            CslType = cslType
+                        });
+                    }
+
+                    tables.Add(new KustoTable()
+                    {
+                        Name = tableName,
+                        Columns = columns
+                    });
+                }
+                reader.Close();
+            }
+            logger.LogInformation($"total of {tables.Count} tables found");
+
+            return tables;
+        }
+
+        public async Task<IEnumerable<KustoFunction>> ListFunctions()
+        {
+            var showFunctionsCmd = CslCommandGenerator.GenerateFunctionsShowCommand();
+            var reader = await adminClient.ExecuteControlCommandAsync(kustoSettings.DbName, showFunctionsCmd);
+            var functionNames = new List<string>();
+            while (reader.Read())
+            {
+                functionNames.Add(reader.GetString(0));
+            }
+            reader.Close();
+
+            var output = new List<KustoFunction>();
+            foreach (var funcName in functionNames)
+            {
+                logger.LogInformation($"reading schema for function {funcName}");
+                var showFunctionCmd = CslCommandGenerator.GenerateFunctionShowCommand(funcName);
+                reader = await adminClient.ExecuteControlCommandAsync(kustoSettings.DbName, showFunctionCmd);
+                if (reader.Read())
+                {
+                    var function = new KustoFunction()
+                    {
+                        Name = reader.GetString(0),
+                        Parameters = reader[1] == DBNull.Value ? null : reader.GetString(1),
+                        Body = reader[2] == DBNull.Value ? null : reader.GetString(2),
+                        Folder = reader[3] == DBNull.Value ? null : reader.GetString(3),
+                        DocString = reader[4] == DBNull.Value ? null : reader.GetString(4)
+                    };
+                    output.Add(function);
+                }
+                reader.Close();
+            }
+            logger.LogInformation($"total of {output.Count} functions found");
+
+            return output;
+        }
+        #endregion
 
         public void Dispose()
         {
@@ -242,7 +369,12 @@ namespace Common.Kusto
             return (total, lastRecord);
         }
 
-        private async Task<(int Total, object LastRecord)> Read(Type entityType, IDataReader reader, Func<IList<object>, CancellationToken, Task> onBatchReceived, CancellationToken cancellationToken, int batchSize)
+        private async Task<(int Total, object LastRecord)> Read(
+            Type entityType,
+            IDataReader reader,
+            Func<IList<object>, CancellationToken, Task> onBatchReceived,
+            CancellationToken cancellationToken,
+            int batchSize)
         {
             var propMappings = BuildFieldMapping(entityType, reader);
 
@@ -338,6 +470,7 @@ namespace Common.Kusto
                     return propName.Equals(idPropName, StringComparison.OrdinalIgnoreCase);
                 });
             if (idProp == null) return (updates, items);
+            var idPropName1 = idProp.Name.Equals("Id", StringComparison.OrdinalIgnoreCase) ? "['id']" : idProp.Name;
 
             var existingIds = new HashSet<string>();
 
@@ -346,15 +479,15 @@ namespace Common.Kusto
             while (true)
             {
                 var batchRead = 0;
-                var idQuery = $"{tableName} \n| order by {idProp.Name} asc \n| project {idProp.Name} \n| take {throttleSize}";
+                var idQuery = $"{tableName} \n| order by {idPropName1} asc \n| project {idPropName1} \n| take {throttleSize}";
                 if (lastId != null)
                 {
-                    idQuery = $"{tableName} \n| where strcmp({idProp.Name},'{lastId}')>0 \n| order by {idProp.Name} asc \n| project {idProp.Name} \n| take {throttleSize}";
+                    idQuery = $"{tableName} \n| where strcmp({idPropName1},'{lastId}')>0 \n| order by {idPropName1} asc \n| project {idPropName1} \n| take {throttleSize}";
                 }
                 var reader = await queryClient.ExecuteQueryAsync(
                     kustoSettings.DbName,
                     idQuery,
-                    new ClientRequestProperties { ClientRequestId = Guid.NewGuid().ToString() });
+                    GetClientRequestProps());
                 while (reader.Read())
                 {
                     lastId = reader.GetString(0);
@@ -380,6 +513,20 @@ namespace Common.Kusto
             }
 
             return (updates, inserts);
+        }
+
+        private ClientRequestProperties GetClientRequestProps(TimeSpan timeout = default)
+        {
+            var requestProps = new ClientRequestProperties
+            {
+                ClientRequestId = Guid.NewGuid().ToString()
+            };
+            if (timeout != default)
+            {
+                requestProps.SetOption(ClientRequestProperties.OptionServerTimeout, timeout);
+            }
+
+            return requestProps;
         }
 
         #region obj mapping

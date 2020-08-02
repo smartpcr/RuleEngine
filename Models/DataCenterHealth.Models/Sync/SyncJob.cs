@@ -3,7 +3,6 @@
     using System;
     using System.ComponentModel.DataAnnotations;
     using DataCenterHealth.Models.Summaries;
-    using MongoDB.Bson;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
 

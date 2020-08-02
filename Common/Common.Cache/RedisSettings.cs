@@ -13,5 +13,8 @@ namespace Common.Cache
         public string HostName { get; set; }
         public string AccessKeySecretName { get; set; }
         public string ProtectionCertSecretName { get; set; }
+
+        public string Endpoint => $"{HostName}.redis.cache.windows.net:6380";
+
     }
 }

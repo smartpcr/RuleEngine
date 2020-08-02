@@ -9,10 +9,13 @@
 namespace Common.Cache
 {
     using System;
+    using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
+    using Common.Storage;
     using Config;
     using KeyVault;
     using Microsoft.Azure.KeyVault;
@@ -31,6 +34,7 @@ namespace Common.Cache
         private readonly DistributedCacheEntryOptions cacheEntryOptions;
         private readonly ILogger<CacheProvider> logger;
         private readonly MultilayerCache multilayerCache;
+        private readonly IBlobClient blobCacheClient;
         private readonly CacheSettings settings;
 
         public CacheProvider(IServiceProvider serviceProvider, ILoggerFactory loggerFactory)
@@ -50,7 +54,14 @@ namespace Common.Cache
             {
                 PopulateLayersOnGet = true
             };
-            if (settings.BlobCache != null) multilayerCache.AppendLayer(new BlobCache(serviceProvider, loggerFactory));
+            if (settings.BlobCache != null)
+            {
+                multilayerCache.AppendLayer(new BlobCache(serviceProvider, loggerFactory));
+                blobCacheClient = new BlobClient(
+                    serviceProvider,
+                    loggerFactory,
+                    new OptionsWrapper<BlobStorageSettings>(settings.BlobCache));
+            }
 
             if (settings.RedisCache != null)
             {
@@ -84,8 +95,10 @@ namespace Common.Cache
                 cachedItem = new CachedItem<T>(item);
                 string serializeObject = Serialize(cachedItem);
                 value = Encoding.UTF8.GetBytes(serializeObject);
+                logger.LogInformation($"updating cache {key}...");
 #pragma warning disable 4014
-                multilayerCache.SetAsync(key, value, cacheEntryOptions, cancel);
+                // ReSharper disable once MethodSupportsCancellation
+                multilayerCache.SetAsync(key, value, cacheEntryOptions);
 #pragma warning restore 4014
                 return item;
             }
@@ -110,9 +123,15 @@ namespace Common.Cache
                 if (lastUpdateTime != default && lastUpdateTime > cachedItem.CreatedOn) needRefresh = true;
             }
 
-            if (!needRefresh) return cachedItem.Value;
+            if (needRefresh)
+            {
+#pragma warning disable 4014
+                // ReSharper disable once MethodSupportsCancellation
+                Task.Factory.StartNew(RefreshItem);
+#pragma warning restore 4014
+            }
 
-            return await RefreshItem();
+            return cachedItem.Value;
         }
 
         public T GetOrUpdate<T>(string key, Func<DateTimeOffset> getLastModificationTime, Func<T> getItem, CancellationToken cancel = default) where T : class, new()
@@ -127,7 +146,7 @@ namespace Common.Cache
                 cachedItem = new CachedItem<T>(item);
                 string serializeObject = Serialize(cachedItem);
                 value = Encoding.UTF8.GetBytes(serializeObject);
-                multilayerCache.SetAsync(key, value, cacheEntryOptions, cancel); // donot wait
+                Task.Run(() => multilayerCache.Set(key, value, cacheEntryOptions));
                 return item;
             }
 
@@ -151,9 +170,13 @@ namespace Common.Cache
                 if (lastUpdateTime != default && lastUpdateTime > cachedItem.CreatedOn) needRefresh = true;
             }
 
-            if (!needRefresh) return cachedItem.Value;
+            if (needRefresh)
+            {
+                // ReSharper disable once MethodSupportsCancellation
+                Task.Factory.StartNew(RefreshItem, TaskCreationOptions.LongRunning);
+            }
 
-            return RefreshItem();
+            return cachedItem.Value;
         }
 
         public async Task Set<T>(string key, T item, CancellationToken cancel) where T : class, new()
@@ -166,9 +189,39 @@ namespace Common.Cache
                 cancel);
         }
 
-        public Task ClearAll()
+        public async Task ClearAsync(string key, CancellationToken cancel)
         {
-            throw new NotImplementedException();
+            await multilayerCache.RemoveAsync(key, cancel);
+        }
+
+        public async Task ClearAll(CancellationToken cancel)
+        {
+            if (blobCacheClient == null)
+            {
+                return;
+            }
+
+            var cachedItems = (await blobCacheClient.ListBlobNamesAsync(null, cancel)).ToList();
+            var clearCacheTasks = new List<Task>();
+            var totalToClear = cachedItems.Count;
+            var totalCleared = 0;
+
+            async Task ClearCacheItemTask(string key)
+            {
+                await ClearAsync(key, cancel);
+                Interlocked.Increment(ref totalCleared);
+                if (totalCleared % 100 == 0)
+                {
+                    logger.LogInformation($"clearing... {totalCleared} of {totalToClear}");
+                }
+            }
+
+            foreach (var key in cachedItems)
+            {
+                clearCacheTasks.Add(ClearCacheItemTask(key));
+            }
+
+            await Task.WhenAll(clearCacheTasks.ToArray());
         }
 
         private string Serialize<T>(CachedItem<T> cachedItem) where T : class, new()

@@ -25,9 +25,10 @@ namespace Common.KeyVault
         public static IServiceCollection AddKeyVault(this IServiceCollection services, IConfiguration configuration)
         {
             var aadSettings = configuration.GetConfiguredSettings<AadSettings>();
+            var vaultSettings = configuration.GetConfiguredSettings<VaultSettings>();
 
             IKeyVaultClient kvClient;
-            if (string.IsNullOrEmpty(aadSettings.ClientCertFile) && string.IsNullOrEmpty(aadSettings.ClientSecretFile))
+            if (vaultSettings.AuthMode == VaultAuthMode.Msi)
             {
                 var azureServiceTokenProvider = new AzureServiceTokenProvider();
                 kvClient = new KeyVaultClient(
@@ -37,12 +38,10 @@ namespace Common.KeyVault
             else
             {
                 var authBuilder = new AadTokenProvider(aadSettings);
-
                 Task<string> AuthCallback(string authority, string resource, string scope)
                 {
                     return authBuilder.GetAccessTokenAsync(resource);
                 }
-
                 kvClient = new KeyVaultClient(AuthCallback);
             }
 

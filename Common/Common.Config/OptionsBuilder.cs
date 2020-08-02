@@ -20,7 +20,7 @@
         {
             var settings = new T();
             sectionName = sectionName ?? typeof(T).Name;
-            configuration.Bind(typeof(T).Name, settings);
+            configuration.Bind(sectionName, settings);
             return settings;
         }
     }

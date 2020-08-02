@@ -72,6 +72,7 @@ namespace Common.Cache
             {
                 if (memoryCache.TryGetValue(key, out var value) && value is byte[] cachedValue)
                 {
+                    logger.LogInformation($"read cache from memory, key={key}");
                     appTelemetry.RecordMetric("memory-cache-hit", 1, ("key", key));
                     return cachedValue;
                 }
@@ -83,6 +84,7 @@ namespace Common.Cache
                 {
                     if (File.GetCreationTimeUtc(cacheFile).Add(cacheSettings.TimeToLive) < DateTimeOffset.UtcNow)
                     {
+                        logger.LogInformation($"read cache from file, key={key}");
                         appTelemetry.RecordMetric("file-cache-expired", 1, ("key", key));
                         return null;
                     }
@@ -130,6 +132,7 @@ namespace Common.Cache
                 if (File.Exists(cacheFile)) File.Delete(cacheFile);
 
                 await File.WriteAllBytesAsync(cacheFile, value, token);
+                logger.LogInformation($"cache set, key={key}");
             }
             catch (Exception ex)
             {

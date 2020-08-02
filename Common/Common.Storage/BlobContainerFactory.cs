@@ -10,16 +10,16 @@ namespace Common.Storage
 {
     using System;
     using System.IO;
+    using System.Security.Cryptography.X509Certificates;
     using System.Text;
-    using System.Threading.Tasks;
     using Auth;
     using Azure.Identity;
     using Azure.Storage.Blobs;
     using Config;
     using KeyVault;
     using Microsoft.Azure.KeyVault;
-    using Microsoft.Azure.Services.AppAuthentication;
     using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
     using Newtonsoft.Json;
 
@@ -29,22 +29,38 @@ namespace Common.Storage
         private readonly BlobStorageSettings blobSettings;
         private readonly ILogger<BlobContainerFactory> logger;
         private readonly VaultSettings vaultSettings;
+        private readonly IKeyVaultClient kvClient;
 
-        public BlobContainerFactory(IConfiguration configuration, ILoggerFactory loggerFactory,
+        public BlobContainerFactory(IServiceProvider serviceProvider, ILoggerFactory loggerFactory,
             BlobStorageSettings settings = null)
         {
+            var configuration = serviceProvider.GetRequiredService<IConfiguration>();
             blobSettings = settings ?? configuration.GetConfiguredSettings<BlobStorageSettings>();
             aadSettings = configuration.GetConfiguredSettings<AadSettings>();
             vaultSettings = configuration.GetConfiguredSettings<VaultSettings>();
+            kvClient = serviceProvider.GetRequiredService<IKeyVaultClient>();
             logger = loggerFactory.CreateLogger<BlobContainerFactory>();
 
-            if (!TryCreateUsingMsi())
-                if (!TryCreateUsingSpn())
-                    if (!TryCreateFromKeyVault())
-                        TryCreateUsingConnStr();
+            switch (blobSettings.AuthMode)
+            {
+                case StorageAuthMode.Msi:
+                    TryCreateUsingMsi();
+                    break;
+                case StorageAuthMode.Spn:
+                    TryCreateUsingSpn();
+                    break;
+                case StorageAuthMode.SecretFromVault:
+                    TryCreateFromKeyVault();
+                    break;
+                case StorageAuthMode.ConnStr:
+                    TryCreateUsingConnStr();
+                    break;
+                default:
+                    throw new NotSupportedException($"Storage auth mode: {blobSettings.AuthMode} is not supported");
+            }
         }
 
-        public Azure.Storage.Blobs.BlobServiceClient BlobService { get; private set; }
+        public BlobServiceClient BlobService { get; private set; }
         public BlobContainerClient ContainerClient { get; private set; }
         public Func<string, BlobContainerClient> CreateContainerClient { get; private set; }
 
@@ -52,7 +68,7 @@ namespace Common.Storage
         ///     running app/svc/pod/vm is assigned an identity (user-assigned, system-assigned)
         /// </summary>
         /// <returns></returns>
-        private bool TryCreateUsingMsi()
+        private void TryCreateUsingMsi()
         {
             logger.LogInformation("trying to access blob using msi...");
             try
@@ -71,13 +87,11 @@ namespace Common.Storage
                     new BlobContainerClient(
                         new Uri($"https://{blobSettings.Account}.blob.core.windows.net/{name}"),
                         new DefaultAzureCredential());
-                return true;
             }
             catch (Exception ex)
             {
                 logger.LogWarning(
                     $"failed to access blob {blobSettings.Account}/{blobSettings.Container} using msi\nerror: {ex.Message}");
-                return false;
             }
         }
 
@@ -85,13 +99,17 @@ namespace Common.Storage
         ///     using pre-configured spn to access storage, secret must be provided for spn authentication
         /// </summary>
         /// <returns></returns>
-        private bool TryCreateUsingSpn()
+        private void TryCreateUsingSpn()
         {
             logger.LogInformation("trying to access blob using spn...");
             try
             {
                 var authBuilder = new AadTokenProvider(aadSettings);
-                var clientCredential = authBuilder.GetClientCredential();
+                Func<string, string> getSecretFromVault =
+                    secretName => kvClient.GetSecretAsync(vaultSettings.VaultUrl, secretName).GetAwaiter().GetResult().Value;
+                Func<string, X509Certificate2> getCertFromVault =
+                    secretName => kvClient.GetX509CertificateAsync(vaultSettings.VaultUrl, secretName).GetAwaiter().GetResult();
+                var clientCredential = authBuilder.GetClientCredential(getSecretFromVault, getCertFromVault);
 
                 BlobContainerClient containerClient;
                 if (clientCredential.secretCredential != null)
@@ -124,13 +142,10 @@ namespace Common.Storage
                 TryRecreateTestBlob(containerClient);
                 logger.LogInformation("Succeed to access blob using msi");
                 ContainerClient = containerClient;
-
-                return true;
             }
             catch (Exception ex)
             {
                 logger.LogWarning($"faield to access blob using spn.\nerror:{ex.Message}");
-                return false;
             }
         }
 
@@ -138,34 +153,13 @@ namespace Common.Storage
         ///     using pre-configured spn to access key vault, then retrieve sas/conn string for storage
         /// </summary>
         /// <returns></returns>
-        private bool TryCreateFromKeyVault()
+        private void TryCreateFromKeyVault()
         {
             if (!string.IsNullOrEmpty(blobSettings.ConnectionStringSecretName))
             {
                 logger.LogInformation("trying to access blob from kv...");
                 try
                 {
-                    IKeyVaultClient kvClient;
-                    if (string.IsNullOrEmpty(aadSettings.ClientCertFile) &&
-                        string.IsNullOrEmpty(aadSettings.ClientSecretFile))
-                    {
-                        var azureServiceTokenProvider = new AzureServiceTokenProvider();
-                        kvClient = new KeyVaultClient(
-                            new KeyVaultClient.AuthenticationCallback(
-                                azureServiceTokenProvider.KeyVaultTokenCallback));
-                    }
-                    else
-                    {
-                        var authBuilder = new AadTokenProvider(aadSettings);
-
-                        Task<string> AuthCallback(string authority, string resource, string scope)
-                        {
-                            return authBuilder.GetAccessTokenAsync(resource);
-                        }
-
-                        kvClient = new KeyVaultClient(AuthCallback);
-                    }
-
                     var connStrSecret = kvClient
                         .GetSecretAsync(vaultSettings.VaultUrl, blobSettings.ConnectionStringSecretName).Result;
                     var containerClient = new BlobContainerClient(connStrSecret.Value, blobSettings.Container);
@@ -176,23 +170,23 @@ namespace Common.Storage
                     ContainerClient = containerClient;
                     BlobService = new BlobServiceClient(connStrSecret.Value);
                     CreateContainerClient = name => new BlobContainerClient(connStrSecret.Value, name);
-                    return true;
+                    return;
                 }
                 catch (Exception ex)
                 {
                     logger.LogWarning($"faield to access blob from kv. \nerror:{ex.Message}");
-                    return false;
+                    return;
                 }
             }
 
-            return false;
+            logger.LogWarning("vault secret for storage connection is not found");
         }
 
         /// <summary>
         ///     connection string is provided as env variable (most unsecure)
         /// </summary>
         /// <returns></returns>
-        private bool TryCreateUsingConnStr()
+        private void TryCreateUsingConnStr()
         {
             if (!string.IsNullOrEmpty(blobSettings.ConnectionStringEnvName))
             {
@@ -209,19 +203,13 @@ namespace Common.Storage
                         ContainerClient = containerClient;
                         BlobService = new BlobServiceClient(storageConnectionString);
                         CreateContainerClient = name => new BlobContainerClient(storageConnectionString, name);
-                        return true;
                     }
-
-                    return false;
                 }
                 catch (Exception ex)
                 {
                     logger.LogWarning($"trying to access blob using connection string. \nerror{ex.Message}");
-                    return false;
                 }
             }
-
-            return false;
         }
 
         private void TryRecreateTestBlob(BlobContainerClient containerClient)

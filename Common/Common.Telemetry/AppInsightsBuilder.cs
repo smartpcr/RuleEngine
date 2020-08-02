@@ -13,28 +13,28 @@ namespace Common.Telemetry
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.DependencyInjection.Extensions;
     using Microsoft.Extensions.Logging;
-    using Microsoft.Extensions.Logging.ApplicationInsights;
     using Microsoft.Extensions.Options;
+    using Microsoft.GenevaAgent;
     using OpenTelemetry.Resources;
     using OpenTelemetry.Trace.Configuration;
     using OpenTelemetry.Trace.Samplers;
+    using Serilog;
+    using ILogger = Microsoft.Extensions.Logging.ILogger;
 
     public static class AppInsightsBuilder
     {
-        public static IServiceCollection AddAppInsights(
-            this IServiceCollection services,
-            IConfiguration configuration,
-            ILogger logger)
+        public static IServiceCollection AddAppInsights(this IServiceCollection services)
         {
+            var serviceProvider = services.BuildServiceProvider();
+            var configuration = serviceProvider.GetRequiredService<IConfiguration>();
             var settings = configuration.GetConfiguredSettings<AppInsightsSettings>();
             var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
             var isProdEnv = string.IsNullOrEmpty(env) ||
                             env.Equals("prod", StringComparison.OrdinalIgnoreCase) ||
                             env.Equals("production", StringComparison.OrdinalIgnoreCase);
             var instrumentationKey = GetInstrumentationKey(settings);
-            logger?.LogInformation($"instrumentation key: {instrumentationKey}, env: {env}");
+            Console.WriteLine($"instrumentation key: {instrumentationKey}, env: {env}");
 
-            var serviceProvider = services.BuildServiceProvider();
             if (serviceProvider.GetService<IHostingEnvironment>() == null)
                 services.TryAddSingleton<IHostingEnvironment, SelfHostingEnvironment>();
 
@@ -68,8 +68,12 @@ namespace Common.Telemetry
             }
 
             services.AddSingleton<ITelemetryInitializer, ContextTelemetryInitializer>();
-            services.AddAppInsightsLogging(configuration, settings);
-            logger?.LogInformation("Enabled app insights");
+            if (settings.Geneva?.UseGenevaSink == true)
+            {
+                AddGenevaSink(services, settings);
+            }
+            services.AddAppInsightsLogging();
+            Console.WriteLine("Enabled app insights");
 
             // open telemetry
             if (settings.EnableTracing)
@@ -92,28 +96,25 @@ namespace Common.Telemetry
                         }));
                 });
 
-                logger?.LogInformation("export open telemetry to app insights");
+                Console.WriteLine("export open telemetry to app insights");
             }
 
             serviceProvider = services.BuildServiceProvider();
             services.TryAddSingleton<IAppTelemetry>(sp => new AppTelemetry(serviceProvider, configuration));
-            logger?.LogInformation("enabled app telemetry");
+            Console.WriteLine("enabled app telemetry");
 
             return services;
         }
 
-        private static void AddAppInsightsLogging(
-            this IServiceCollection services,
-            IConfiguration configuration,
-            AppInsightsSettings settings)
+        private static void AddAppInsightsLogging(this IServiceCollection services)
         {
-            services.AddLogging(builder =>
-            {
-                builder.AddConfiguration(configuration.GetSection("Logging"));
-                builder.AddConsole();
-                builder.AddApplicationInsights(GetInstrumentationKey(settings));
-                builder.AddFilter<ApplicationInsightsLoggerProvider>("", LogLevel.Information);
-            });
+            var serviceProvider = services.BuildServiceProvider();
+            var telemetryConfiguration = serviceProvider.GetRequiredService<TelemetryConfiguration>();
+            var logger = new LoggerConfiguration()
+                .WriteTo.Console()
+                .WriteTo.ApplicationInsights(telemetryConfiguration, TelemetryConverter.Traces)
+                .CreateLogger();
+            services.AddLogging(lb => lb.AddSerilog(logger));
         }
 
         private static string GetInstrumentationKey(AppInsightsSettings settings)
@@ -137,6 +138,25 @@ namespace Common.Telemetry
                 StorageFolder = aiStorage,
                 DeveloperMode = !isProd
             });
+        }
+
+        private static void AddGenevaSink(IServiceCollection services, AppInsightsSettings settings)
+        {
+            var config = new TelemetryConfiguration {InstrumentationKey = GetInstrumentationKey(settings)};
+
+            TelemetryConfiguration genevaMdsdConfig = new TelemetryConfiguration(settings.Geneva.OneDSSinkChannel);
+            TelemetrySink mdsdSink = new TelemetrySink(config, new GenevaAgentChannel()) { Name = settings.Geneva.OneDSSinkChannel };
+            mdsdSink.Initialize(genevaMdsdConfig);
+            config.TelemetrySinks.Add(mdsdSink);
+            config.TelemetryProcessorChainBuilder.Use(next => new GenevaMetricsProcessor(next)
+            {
+                MetricAccountName = settings.Geneva.GenevaMetricsAccountName,
+                MetricNamespace = settings.Geneva.GenevaMetricsNamespace
+            });
+            config.TelemetryProcessorChainBuilder.Build();
+            Console.WriteLine($"Added geneva metrics sink, account={settings.Geneva.GenevaMetricsAccountName}, namespace={settings.Geneva.GenevaMetricsNamespace}");
+
+            services.AddSingleton(config);
         }
     }
 }

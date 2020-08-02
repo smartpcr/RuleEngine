@@ -16,6 +16,7 @@ namespace Common.Kusto
         public string ClusterName { get; set; }
         public string RegionName { get; set; }
         public string DbName { get; set; }
+        public string TableName { get; set; }
         public AuthMode AuthMode { get; set; } = AuthMode.SPN;
 
         public string ClusterUrl

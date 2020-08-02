@@ -11,15 +11,15 @@ namespace Common.Storage
 {
     using System;
     using System.Net;
-    using System.Threading.Tasks;
+    using System.Security.Cryptography.X509Certificates;
     using Auth;
     using Azure.Identity;
     using Azure.Storage.Queues;
     using Config;
     using KeyVault;
     using Microsoft.Azure.KeyVault;
-    using Microsoft.Azure.Services.AppAuthentication;
     using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
 
     public class QueueClientFactory
@@ -28,27 +28,34 @@ namespace Common.Storage
         private readonly ILogger<QueueClientFactory> logger;
         private readonly QueueSettings queueSettings;
         private readonly VaultSettings vaultSettings;
+        private readonly IKeyVaultClient kvClient;
 
-        public QueueClientFactory(IConfiguration configuration, ILoggerFactory loggerFactory)
+        public QueueClientFactory(IServiceProvider serviceProvider, ILoggerFactory loggerFactory)
         {
             logger = loggerFactory.CreateLogger<QueueClientFactory>();
+            var configuration = serviceProvider.GetRequiredService<IConfiguration>();
             queueSettings = configuration.GetConfiguredSettings<QueueSettings>();
             aadSettings = configuration.GetConfiguredSettings<AadSettings>();
             vaultSettings = configuration.GetConfiguredSettings<VaultSettings>();
+            kvClient = serviceProvider.GetRequiredService<IKeyVaultClient>();
 
-            if (!TryCreateClientUsingMsi())
-                if (!TryCreateClientUsingSpn())
-                    if (!TryCreateClientFromKeyVault())
-                    {
-                        if (!string.IsNullOrEmpty(queueSettings.ConnectionStringSecretName))
-                        {
-                            if (!TryCreateClientUsingConnStr()) throw new Exception("failed to create queue client");
-                        }
-                        else
-                        {
-                            throw new Exception("Invalid queue settings");
-                        }
-                    }
+            switch (queueSettings.AuthMode)
+            {
+                case StorageAuthMode.Msi:
+                    TryCreateClientUsingMsi();
+                    break;
+                case StorageAuthMode.Spn:
+                    TryCreateClientUsingSpn();
+                    break;
+                case StorageAuthMode.SecretFromVault:
+                    TryCreateClientFromKeyVault();
+                    break;
+                case StorageAuthMode.ConnStr:
+                    TryCreateClientUsingConnStr();
+                    break;
+                default:
+                    throw new NotSupportedException($"Storage auth mode: {queueSettings.AuthMode} is not supported");
+            }
         }
 
         public QueueClient QueueClient { get; private set; }
@@ -59,7 +66,7 @@ namespace Common.Storage
         ///     running app/svc/pod/vm is assigned an identity (user-assigned, system-assigned)
         /// </summary>
         /// <returns></returns>
-        private bool TryCreateClientUsingMsi()
+        private void TryCreateClientUsingMsi()
         {
             logger.LogInformation("trying to access queue using msi...");
             try
@@ -70,13 +77,11 @@ namespace Common.Storage
                 QueueClient = queueServiceClient.GetQueueClient(queueSettings.QueueName);
                 DeadLetterQueueClient = queueServiceClient.GetQueueClient(queueSettings.DeadLetterQueueName);
                 logger.LogInformation("Succeed to access queue using msi");
-                return true;
             }
             catch (Exception ex)
             {
                 logger.LogWarning(
                     $"failed to access queue {queueSettings.Account}/{queueSettings.QueueName} using msi. \nerror{ex.Message}");
-                return false;
             }
         }
 
@@ -84,13 +89,17 @@ namespace Common.Storage
         ///     using pre-configured spn to access storage, secret must be provided for spn authentication
         /// </summary>
         /// <returns></returns>
-        private bool TryCreateClientUsingSpn()
+        private void TryCreateClientUsingSpn()
         {
             logger.LogInformation("trying to access queue using spn...");
             try
             {
                 var authBuilder = new AadTokenProvider(aadSettings);
-                var clientCredential = authBuilder.GetClientCredential();
+                Func<string, string> getSecretFromVault =
+                    secretName => kvClient.GetSecretAsync(vaultSettings.VaultUrl, secretName).GetAwaiter().GetResult().Value;
+                Func<string, X509Certificate2> getCertFromVault =
+                    secretName => kvClient.GetX509CertificateAsync(vaultSettings.VaultUrl, secretName).GetAwaiter().GetResult();
+                var clientCredential = authBuilder.GetClientCredential(getSecretFromVault, getCertFromVault);
                 QueueServiceClient queueServiceClient;
                 if (clientCredential.secretCredential != null)
                     queueServiceClient = new QueueServiceClient(new Uri(queueSettings.AccountServiceUrl),
@@ -107,16 +116,14 @@ namespace Common.Storage
                     if (availableQueues.Current?.Name == queueSettings.QueueName)
                     {
                         logger.LogInformation("Succeed to access queue using spn");
-                        return true;
+                        return;
                     }
 
                 logger.LogInformation($"Unabe to find queue with name {queueSettings.QueueName}");
-                return false;
             }
             catch (Exception ex)
             {
                 logger.LogWarning($"faield to access queue using spn. \nerror{ex.Message}");
-                return false;
             }
         }
 
@@ -124,34 +131,13 @@ namespace Common.Storage
         ///     using pre-configured spn to access key vault, then retrieve sas/conn string for storage
         /// </summary>
         /// <returns></returns>
-        private bool TryCreateClientFromKeyVault()
+        private void TryCreateClientFromKeyVault()
         {
             if (!string.IsNullOrEmpty(queueSettings.ConnectionStringSecretName))
             {
                 logger.LogInformation("trying to access queue from kv...");
                 try
                 {
-                    IKeyVaultClient kvClient;
-                    if (string.IsNullOrEmpty(aadSettings.ClientCertFile) &&
-                        string.IsNullOrEmpty(aadSettings.ClientSecretFile))
-                    {
-                        var azureServiceTokenProvider = new AzureServiceTokenProvider();
-                        kvClient = new KeyVaultClient(
-                            new KeyVaultClient.AuthenticationCallback(
-                                azureServiceTokenProvider.KeyVaultTokenCallback));
-                    }
-                    else
-                    {
-                        var authBuilder = new AadTokenProvider(aadSettings);
-
-                        Task<string> AuthCallback(string authority, string resource, string scope)
-                        {
-                            return authBuilder.GetAccessTokenAsync(resource);
-                        }
-
-                        kvClient = new KeyVaultClient(AuthCallback);
-                    }
-
                     var connStrSecret = kvClient
                         .GetSecretAsync(vaultSettings.VaultUrl, queueSettings.ConnectionStringSecretName).Result;
                     var queueServiceClient = new QueueServiceClient(connStrSecret.Value, new QueueClientOptions());
@@ -160,45 +146,40 @@ namespace Common.Storage
                     QueueClient = queueServiceClient.GetQueueClient(queueSettings.QueueName);
                     DeadLetterQueueClient = queueServiceClient.GetQueueClient(queueSettings.DeadLetterQueueName);
                     logger.LogInformation("Succeed to access queue using connstr from key vault");
-                    return true;
                 }
                 catch (Exception ex)
                 {
                     logger.LogError($"faield to access queue from kv. \nerror{ex.Message}");
-                    return false;
                 }
             }
-
-            return false;
         }
 
         /// <summary>
         ///     connection string is provided as env variable (most unsecure)
         /// </summary>
         /// <returns></returns>
-        private bool TryCreateClientUsingConnStr()
+        private void TryCreateClientUsingConnStr()
         {
             logger.LogInformation("trying to access queue using connection string...");
-            try
+            if (!string.IsNullOrEmpty(queueSettings.ConnectionStringSecretName))
             {
-                var storageConnectionString = Environment.GetEnvironmentVariable(queueSettings.ConnectionStringEnvName);
-                if (!string.IsNullOrEmpty(storageConnectionString))
+                try
                 {
-                    var queueServiceClient = new QueueServiceClient(storageConnectionString, new QueueClientOptions());
-                    VerifyQueueServiceClient(queueServiceClient, queueSettings.QueueName);
+                    var storageConnectionString = Environment.GetEnvironmentVariable(queueSettings.ConnectionStringEnvName);
+                    if (!string.IsNullOrEmpty(storageConnectionString))
+                    {
+                        var queueServiceClient = new QueueServiceClient(storageConnectionString, new QueueClientOptions());
+                        VerifyQueueServiceClient(queueServiceClient, queueSettings.QueueName);
 
-                    QueueClient = queueServiceClient.GetQueueClient(queueSettings.QueueName);
-                    DeadLetterQueueClient = queueServiceClient.GetQueueClient(queueSettings.DeadLetterQueueName);
-                    logger.LogInformation("Succeed to access queue using connstr from env");
-                    return true;
+                        QueueClient = queueServiceClient.GetQueueClient(queueSettings.QueueName);
+                        DeadLetterQueueClient = queueServiceClient.GetQueueClient(queueSettings.DeadLetterQueueName);
+                        logger.LogInformation("Succeed to access queue using connstr from env");
+                    }
                 }
-
-                return false;
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "trying to access queue using connection string...");
-                return false;
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "trying to access queue using connection string...");
+                }
             }
         }
 

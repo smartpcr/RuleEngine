@@ -12,5 +12,12 @@ namespace Common.KeyVault
     {
         public string VaultName { get; set; }
         public string VaultUrl => $"https://{VaultName}.vault.azure.net";
+        public VaultAuthMode AuthMode { get; set; } = VaultAuthMode.Msi;
+    }
+
+    public enum VaultAuthMode
+    {
+        Msi,
+        Spn
     }
 }

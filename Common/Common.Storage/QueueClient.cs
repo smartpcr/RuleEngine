@@ -17,6 +17,7 @@ namespace Common.Storage
     using Azure.Storage.Queues.Models;
     using Config;
     using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
     using Newtonsoft.Json;
 
@@ -27,11 +28,12 @@ namespace Common.Storage
         private readonly ILogger<QueueClient<T>> logger;
         private readonly QueueSettings queueSettings;
 
-        public QueueClient(IConfiguration configuration, ILoggerFactory loggerFactory)
+        public QueueClient(IServiceProvider serviceProvider, ILoggerFactory loggerFactory)
         {
             logger = loggerFactory.CreateLogger<QueueClient<T>>();
+            var configuration = serviceProvider.GetRequiredService<IConfiguration>();
             queueSettings = configuration.GetConfiguredSettings<QueueSettings>();
-            var clientFactory = new QueueClientFactory(configuration, loggerFactory);
+            var clientFactory = new QueueClientFactory(serviceProvider, loggerFactory);
             client = clientFactory.QueueClient;
             if (client == null) throw new Exception("Failed to access storage queue");
 
@@ -70,7 +72,7 @@ namespace Common.Storage
                     await deadLetterQueueClient.SendMessageAsync(jsonMsg, cancellationToken);
                     messageList.Remove(deadMsg);
                     logger.LogInformation(
-                        $"message exceed retry acount: {deadMsg.DequeueCount}, moved to dead letter queue: {queueSettings.DeadLetterQueueName}");
+                        $"message exceed retry count {deadMsg.DequeueCount} is over {queueSettings.MaxDequeueCount}, moved to dead letter queue: {queueSettings.DeadLetterQueueName}");
                 }
 
             return messageList;

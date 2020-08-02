@@ -60,7 +60,7 @@ namespace Common.Batch
             _logger.LogInformation($"total of {totalBatches} batches are generated");
         }
 
-        public async Task<int> GetTotalProcessed()
+        public async Task<long> GetTotalProcessed()
         {
             _logger.LogInformation($"counting batches already processed...");
             var count = await _blobClient.CountAsync<Batch<TField>>(_batchSetting.Name, t => t.FinishTime != null,
@@ -69,7 +69,7 @@ namespace Common.Batch
             return count;
         }
 
-        public async Task<int> GetTotalInProgress()
+        public async Task<long> GetTotalInProgress()
         {
             _logger.LogInformation($"counting batches in progress...");
             var count = await _blobClient.CountAsync<Batch<TField>>(_batchSetting.Name,
@@ -78,7 +78,7 @@ namespace Common.Batch
             return count;
         }
 
-        public async Task<int> GetTotalInQueue()
+        public async Task<long> GetTotalInQueue()
         {
             _logger.LogInformation($"counting batches in queue...");
             var count = await _blobClient.CountAsync<Batch<TField>>(_batchSetting.Name, t => t.StartTime == null,
