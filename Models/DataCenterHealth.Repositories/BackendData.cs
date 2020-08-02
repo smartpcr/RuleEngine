@@ -10,11 +10,9 @@ namespace DataCenterHealth.Repositories
 {
     using System;
     using Common.DocDb;
-    using DataCenterHealth.Entities.DataType;
-    using DataCenterHealth.Entities.Location;
+    using DataCenterHealth.Models.DataTypes;
     using DataCenterHealth.Models.PowerServices;
     using DataCenterHealth.Models.Summaries;
-    using Entities.Devices;
     using Models;
     using Models.Devices;
     using Models.Jobs;
@@ -34,7 +32,6 @@ namespace DataCenterHealth.Repositories
 
         [MappedModel(typeof(DataPoint))] public EntityStoreSettings DataPoint { get; set; }
         [MappedModel(typeof(CeDataPoint))] public EntityStoreSettings CEDataPoint { get; set; }
-        [MappedModel(typeof(Allocation))] public EntityStoreSettings Allocation { get; set; }
 
         [MappedModel(typeof(Hierarchy))] public EntityStoreSettings Hierarchy { get; set; }
 
@@ -70,15 +67,6 @@ namespace DataCenterHealth.Repositories
 
         [MappedModel(typeof(SyncJob))]
         public EntityStoreSettings SyncJobs { get; set; }
-
-        [MappedModel(typeof(ZenonDataType))]
-        public EntityStoreSettings ZenonDataType { get; set; }
-
-        [MappedModel(typeof(ZenonDriverConfig))]
-        public EntityStoreSettings ZenonDriverConfig { get; set; }
-
-        [MappedModel(typeof(ZenonDataPointConfig))]
-        public EntityStoreSettings ZenonDataPointConfig { get; set; }
 
         [MappedModel(typeof(ChangeHistory))]
         public EntityStoreSettings ChangeHistory { get; set; }

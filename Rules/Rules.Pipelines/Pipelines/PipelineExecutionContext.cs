@@ -11,7 +11,7 @@ namespace Rules.Validations.Pipelines
     using System;
     using System.Collections.Generic;
     using System.Threading;
-    using DataCenterHealth.Entities.Devices;
+    using DataCenterHealth.Models.DataTypes;
     using DataCenterHealth.Models.Devices;
     using DataCenterHealth.Models.Traversals;
     using DeviceRelation = DataCenterHealth.Models.Devices.DeviceRelation;

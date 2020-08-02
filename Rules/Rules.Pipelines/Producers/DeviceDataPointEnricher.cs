@@ -14,8 +14,8 @@ namespace Rules.Validations.Producers
     using System.Threading;
     using Common.Cache;
     using Common.Telemetry;
-    using DataCenterHealth.Entities.Devices;
     using DataCenterHealth.Models;
+    using DataCenterHealth.Models.DataTypes;
     using DataCenterHealth.Models.Devices;
     using DataCenterHealth.Repositories;
     using Microsoft.Extensions.DependencyInjection;

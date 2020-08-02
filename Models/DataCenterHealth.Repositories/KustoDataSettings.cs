@@ -1,8 +1,8 @@
 namespace DataCenterHealth.Repositories
 {
     using Common.Kusto;
-    using DataCenterHealth.Entities.Devices;
     using DataCenterHealth.Models;
+    using DataCenterHealth.Models.DataTypes;
     using DataCenterHealth.Models.Jobs;
     using DataCenterHealth.Models.PowerServices;
     using Models.Devices;
