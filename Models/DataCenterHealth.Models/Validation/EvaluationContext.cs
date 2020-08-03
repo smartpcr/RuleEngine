@@ -8,6 +8,7 @@ namespace DataCenterHealth.Models.Validation
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Threading;
     using Common.Telemetry;
     using DataCenterHealth.Models.DataTypes;
@@ -17,28 +18,49 @@ namespace DataCenterHealth.Models.Validation
 
     public class EvaluationContext
     {
+        private readonly ILoggerFactory loggerFactory;
         public string DcName { get; }
+        public List<string> DeviceNames { get; }
+        public bool IsDataCenterEnabled { get; private set; }
         public string RunId { get; }
         public string JobId { get; }
+        public ValidationContextScope Scope { get; }
+        public List<string> RuleIds { get; set; }
         public ILogger Logger { get; }
         public IAppTelemetry AppTelemetry { get; }
-        public List<string> EnabledDataCenters { get; set; }
-        public Dictionary<string, PowerDevice> DeviceLookup { get; set; }
-        public Dictionary<string, PowerDevice> RedundantDeviceLookup { get; set; }
-        public Dictionary<string, List<DeviceRelation>> RelationLookup { get; set; }
-        public Dictionary<string, List<ZenonEventStats>> ZenonStatsLookup { get; set; }
-        public Dictionary<string, List<ZenonLastReading>> ZenonLastReadingLookup { get; set; }
-        public Dictionary<string, List<ZenonDataPoint>> ZenonDataPointLookup { get; set; }
-        public DeviceHierarchyDeviceTraversal DeviceTraversal { get; set; }
+        public Dictionary<string, PowerDevice> DeviceLookup { get; private set; }
+        public Dictionary<string, PowerDevice> RedundantDeviceLookup { get; private set; }
+        public Dictionary<string, List<DeviceRelation>> RelationLookup { get; private set; }
+        public Dictionary<string, List<ZenonEventStats>> ZenonStatsLookup { get; private set; }
+        public Dictionary<string, List<ZenonLastReading>> ZenonLastReadingLookup { get; private set; }
+        public Dictionary<string, List<ZenonDataPoint>> ZenonDataPointLookup { get; private set; }
+        public DeviceHierarchyDeviceTraversal DeviceTraversal { get; private set; }
 
-        public EvaluationContext(string dcName, string runId, string jobId, ILogger logger, IAppTelemetry appTelemetry)
+        public EvaluationContext(
+            string dcName,
+            List<string> deviceNames,
+            string runId,
+            string jobId,
+            ValidationContextScope scope,
+            List<string> ruleIds,
+            ILoggerFactory loggerFactory,
+            IAppTelemetry appTelemetry)
         {
+            this.loggerFactory = loggerFactory;
             DcName = dcName;
+            DeviceNames = deviceNames;
+            if (string.IsNullOrEmpty(DcName) && DeviceNames?.Any() == true)
+            {
+                var deviceNameParts = DeviceNames[0].Split(new[] {'-'}, StringSplitOptions.RemoveEmptyEntries);
+                DcName = deviceNameParts[0];
+            }
             RunId = runId;
             JobId = jobId;
-            Logger = logger;
+            Scope = scope;
+            RuleIds = ruleIds;
+            Logger = loggerFactory.CreateLogger<EvaluationContext>();
             AppTelemetry = appTelemetry;
-            EnabledDataCenters = new List<string>();
+            IsDataCenterEnabled = true;
             DeviceLookup = new Dictionary<string, PowerDevice>();
             RedundantDeviceLookup = new Dictionary<string, PowerDevice>();
             RelationLookup = new Dictionary<string, List<DeviceRelation>>();
@@ -46,6 +68,52 @@ namespace DataCenterHealth.Models.Validation
             ZenonLastReadingLookup = new Dictionary<string, List<ZenonLastReading>>();
             ZenonDataPointLookup = new Dictionary<string, List<ZenonDataPoint>>();
         }
+        
+        #region lookup
+
+        public void SetEnabledDataCenters(List<string> enabledDcNames)
+        {
+            IsDataCenterEnabled = enabledDcNames.Contains(DcName);
+        }
+        
+        public void SetDevices(Dictionary<string, PowerDevice> deviceLookup)
+        {
+            DeviceLookup = deviceLookup;
+            if (DeviceLookup?.Any() == true && RelationLookup?.Any() == true)
+            {
+                DeviceTraversal = new DeviceHierarchyDeviceTraversal(DeviceLookup, RelationLookup, loggerFactory);
+            }
+        }
+
+        public void SetRedundantDevices(Dictionary<string, PowerDevice> redundantDeviceLookup)
+        {
+            RedundantDeviceLookup = redundantDeviceLookup;
+        }
+
+        public void SetDeviceRelations(Dictionary<string, List<DeviceRelation>> relationLookup)
+        {
+            RelationLookup = relationLookup;
+            if (DeviceLookup?.Any() == true && RelationLookup?.Any() == true)
+            {
+                DeviceTraversal = new DeviceHierarchyDeviceTraversal(DeviceLookup, RelationLookup, loggerFactory);
+            }
+        }
+
+        public void SetZenonReadingStats(Dictionary<string, List<ZenonEventStats>> zenonEventStatsLookup)
+        {
+            ZenonStatsLookup = zenonEventStatsLookup;
+        }
+
+        public void SetLastZenonReadings(Dictionary<string, List<ZenonLastReading>> zenonLastReadingLookup)
+        {
+            ZenonLastReadingLookup = zenonLastReadingLookup;
+        }
+
+        public void SetZenonDataPoints(Dictionary<string, List<ZenonDataPoint>> zenonDataPointLookup)
+        {
+            ZenonDataPointLookup = zenonDataPointLookup;
+        }
+        #endregion
 
         #region counts
         private int totalBroadcast;
@@ -118,8 +186,8 @@ namespace DataCenterHealth.Models.Validation
 
         public TimeSpan Span { get; set; }
 
-        public List<(string deviceName, string ruleId, decimal score)> Scores { get; set; } =
-            new List<(string deviceName, string ruleId, decimal score)>();
+        public List<(string deviceName, string ruleId, double score)> Scores { get; set; } =
+            new List<(string deviceName, string ruleId, double score)>();
 
         public void AddTotalSent(int value)
         {

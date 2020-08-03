@@ -7,7 +7,6 @@
     <ItemGroup>
       <ProjectReference Include="..\..\Common\Common.DocDb\Common.DocDb.csproj" />
       <ProjectReference Include="..\..\Common\Common.Kusto\Common.Kusto.csproj" />
-      <ProjectReference Include="..\DataCenterHealth.Entities\DataCenterHealth.Entities.csproj" />
       <ProjectReference Include="..\DataCenterHealth.Models\DataCenterHealth.Models.csproj" />
     </ItemGroup>
 

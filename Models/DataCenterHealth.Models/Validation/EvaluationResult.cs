@@ -11,12 +11,13 @@ namespace DataCenterHealth.Models.Validation
     using DataCenterHealth.Models.Jobs;
     using DataCenterHealth.Models.Rules;
 
-    public class EvaluationResult
+    public class EvaluationResult : BaseEntity
     {
-        public bool Passed { get; set; }
+        public bool? Passed { get; set; }
         public double Score { get; set; }
         public string ContextType { get; set; }
         public string ContextId { get; set; }
+        public string DeviceName { get; set; }
         public string RuleId { get; set; }
         public string RuleName { get; set; }
         public string RuleSetName { get; set; }
@@ -27,5 +28,6 @@ namespace DataCenterHealth.Models.Validation
         public string JobId { get; set; }
         public List<DeviceValidationEvidence> Evidences { get; set; }
         public DateTime EvaluationTime { get; set; }
+        public string Error { get; set; }
     }
 }
