@@ -29,7 +29,7 @@ namespace Rules.Pipelines.Producers
 
         public abstract Task<IEnumerable<(T Payload, ValidationRule Rule)>> Produce(EvaluationContext context, CancellationToken cancel);
 
-        public ISourceBlock<(T Payload, ValidationRule Rule)> CreateProducerActivity(CancellationToken cancellationToken)
+        public BufferBlock<(T Payload, ValidationRule Rule)> CreateProducerActivity(CancellationToken cancellationToken)
         {
             var producerBlock = new BufferBlock<(T Payload, ValidationRule Rule)>(
                 new DataflowBlockOptions

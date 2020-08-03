@@ -107,7 +107,7 @@ namespace Rules.Pipelines.Transformer
                 DeviceName = input.Payload.DeviceName,
                 RuleId = input.Rule.Id,
                 EvaluationTime = DateTime.UtcNow,
-                RunId = context.RunId,
+                RunId = context.Run.Id,
                 JobId = context.JobId,
                 Evidences = new List<DeviceValidationEvidence>(),
                 Passed = null,

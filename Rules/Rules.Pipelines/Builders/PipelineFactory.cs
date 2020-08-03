@@ -1,21 +1,21 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="ContextEnricherFactory.cs" company="Microsoft Corporation">
+// <copyright file="PipelineFactory.cs" company="Microsoft Corporation">
 //   Copyright (c) 2020 Microsoft Corporation.  All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace Rules.Pipelines.Producers.Enrichers
+namespace Rules.Pipelines.Builders
 {
     using System;
     using System.Linq;
     using Microsoft.Extensions.DependencyInjection;
 
-    public class ContextEnricherFactory
+    public class PipelineFactory
     {
-        public IContextEnricher<T> GetContextEnricher<T>(IServiceProvider sp, string name) where T : class, new()
+        public IPipeline<T> CreatePipeline<T>(IServiceProvider serviceProvider) where T : class, new()
         {
-            var enrichers = sp.GetServices<IContextEnricher<T>>();
-            return enrichers.First(e => e.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+            var pipelines = serviceProvider.GetServices<IPipeline<T>>();
+            return pipelines.First(p => p.Name.Equals(typeof(T).Name, StringComparison.OrdinalIgnoreCase));
         }
     }
 }

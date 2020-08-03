@@ -11,7 +11,9 @@ namespace Rules.Pipelines
     using DataCenterHealth.Models.Validation;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.DependencyInjection.Extensions;
     using Rules.Pipelines.Batches;
+    using Rules.Pipelines.Builders;
     using Rules.Pipelines.Persistence;
     using Rules.Pipelines.Producers;
     using Rules.Pipelines.Producers.Enrichers;
@@ -29,7 +31,7 @@ namespace Rules.Pipelines
             services.AddSingleton<IContextEnricher<PowerDevice>, DataPointsEnricher>();
             services.AddSingleton<IContextEnricher<PowerDevice>, ZenonEventsEnricher>();
             services.AddSingleton<IContextEnricher<PowerDevice>, DevicePathEnricher>();
-            services.AddSingleton<ContextEnricherFactory<PowerDevice>>();
+            services.TryAddSingleton<ContextEnricherFactory>();
             services.AddSingleton<IContextProvider<PowerDevice>, DeviceContextProvider>();
             services.AddSingleton<IPayloadProducer<PowerDevice>, DevicePayloadProducer>();
             
@@ -41,6 +43,9 @@ namespace Rules.Pipelines
             
             // persistence
             services.AddSingleton<IPayloadPersistence<EvaluationResult>, ValidationResultPersistence>();
+
+            services.AddSingleton<IPipeline<PowerDevice>, DeviceValidationPipeline>();
+            services.TryAddSingleton<PipelineFactory>();
         }
     }
 }

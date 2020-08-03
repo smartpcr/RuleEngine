@@ -13,6 +13,8 @@ namespace DataCenterHealth.Models.Validation
     using Common.Telemetry;
     using DataCenterHealth.Models.DataTypes;
     using DataCenterHealth.Models.Devices;
+    using DataCenterHealth.Models.Jobs;
+    using DataCenterHealth.Models.Rules;
     using DataCenterHealth.Models.Traversals;
     using Microsoft.Extensions.Logging;
 
@@ -22,10 +24,10 @@ namespace DataCenterHealth.Models.Validation
         public string DcName { get; }
         public List<string> DeviceNames { get; }
         public bool IsDataCenterEnabled { get; private set; }
-        public string RunId { get; }
+        public DeviceValidationRun Run { get; }
         public string JobId { get; }
         public ValidationContextScope Scope { get; }
-        public List<string> RuleIds { get; set; }
+        public List<ValidationRule> Rules { get; set; }
         public ILogger Logger { get; }
         public IAppTelemetry AppTelemetry { get; }
         public Dictionary<string, PowerDevice> DeviceLookup { get; private set; }
@@ -39,10 +41,10 @@ namespace DataCenterHealth.Models.Validation
         public EvaluationContext(
             string dcName,
             List<string> deviceNames,
-            string runId,
+            DeviceValidationRun run,
             string jobId,
             ValidationContextScope scope,
-            List<string> ruleIds,
+            List<ValidationRule> rules,
             ILoggerFactory loggerFactory,
             IAppTelemetry appTelemetry)
         {
@@ -54,10 +56,11 @@ namespace DataCenterHealth.Models.Validation
                 var deviceNameParts = DeviceNames[0].Split(new[] {'-'}, StringSplitOptions.RemoveEmptyEntries);
                 DcName = deviceNameParts[0];
             }
-            RunId = runId;
+
+            Run = run;
             JobId = jobId;
             Scope = scope;
-            RuleIds = ruleIds;
+            Rules = rules;
             Logger = loggerFactory.CreateLogger<EvaluationContext>();
             AppTelemetry = appTelemetry;
             IsDataCenterEnabled = true;

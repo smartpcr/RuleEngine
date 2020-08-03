@@ -24,12 +24,12 @@ namespace DataCenterHealth.Models.Jobs
         /// <summary>
         ///     either RuleId or RuleSetId, but not both can be set
         /// </summary>
-        public string RuleSetId { get; set; }
+        public List<string> RuleSetIds { get; set; }
 
         /// <summary>
         ///     either RuleId or RuleSetId, but not both can be set
         /// </summary>
-        public string RuleId { get; set; }
+        public List<string> RuleIds { get; set; }
 
         public DateTime SubmissionTime { get; set; }
         public string SubmittedBy { get; set; }

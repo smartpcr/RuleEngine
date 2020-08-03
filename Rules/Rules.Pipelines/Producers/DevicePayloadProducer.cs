@@ -11,7 +11,6 @@ namespace Rules.Pipelines.Producers
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
-    using Common.Cache;
     using Common.Telemetry;
     using DataCenterHealth.Models.Devices;
     using DataCenterHealth.Models.Jobs;
@@ -25,8 +24,6 @@ namespace Rules.Pipelines.Producers
     {
         private ILogger<DevicePayloadProducer> logger;
         private readonly IAppTelemetry appTelemetry;
-        private readonly ICacheProvider cache;
-        private readonly IDocDbRepository<ValidationRule> ruleRepo;
         private readonly IDocDbRepository<DeviceValidationRun> runRepo;
         private readonly IContextProvider<PowerDevice> contextProvider;
         
@@ -34,30 +31,20 @@ namespace Rules.Pipelines.Producers
         {
             logger = loggerFactory.CreateLogger<DevicePayloadProducer>();
             appTelemetry = serviceProvider.GetRequiredService<IAppTelemetry>();
-            cache = serviceProvider.GetRequiredService<ICacheProvider>();
             var repoFactory = serviceProvider.GetRequiredService<RepositoryFactory>();
-            ruleRepo = repoFactory.CreateRepository<ValidationRule>();
             runRepo = repoFactory.CreateRepository<DeviceValidationRun>();
             contextProvider = serviceProvider.GetRequiredService<IContextProvider<PowerDevice>>();
         }
 
         public override async Task<IEnumerable<(PowerDevice Payload, ValidationRule Rule)>> Produce(EvaluationContext context, CancellationToken cancel)
         {
-            if (context.RuleIds?.Any() != true)
+            if (context.Rules?.Any() != true)
             {
                 throw new InvalidOperationException("rules are not initialized in evaluation contest");
             }
             
             using var scope = appTelemetry.StartOperation(this);
-            var validationRuleList = await cache.GetOrUpdateAsync(
-                $"list-{nameof(ValidationRule)}={string.Join(",", context.RuleIds).GetHashCode()}",
-                async () => await ruleRepo.GetLastModificationTime(null, cancel),
-                async () =>
-                {
-                    var rules = await ruleRepo.Query("c.id in ({0})", context.RuleIds);
-                    return rules.ToList();
-                }, cancel);
-            logger.LogInformation($"total of {validationRuleList.Count} validation rules found");
+            logger.LogInformation($"total of {context.Rules.Count} validation rules are used");
             
             List<PowerDevice> deviceList;
             if (context.DeviceNames?.Count > 0)
@@ -78,16 +65,16 @@ namespace Rules.Pipelines.Producers
                 ("dcName", context.DcName));
             
             var deviceValidationPayloads = new List<(PowerDevice Payload, ValidationRule Rule)>();
-            var run = await runRepo.GetById(context.RunId);
+            var run = context.Run;
             foreach (var device in deviceList)
             {
-                deviceValidationPayloads.AddRange(validationRuleList.Select(rule => (device, rule)));
+                deviceValidationPayloads.AddRange(context.Rules.Select(rule => (device, rule)));
             }
 
             run.JobId = context.JobId;
             run.ExecutionTime = DateTime.UtcNow;
             run.TotalDevices = deviceList.Count;
-            run.TotalRules = validationRuleList.Count;
+            run.TotalRules = context.Rules.Count;
             run.TotalPayloads = deviceValidationPayloads.Count;
             await runRepo.Update(run);
 
@@ -95,7 +82,7 @@ namespace Rules.Pipelines.Producers
                 "payloads",
                 deviceValidationPayloads.Count,
                 ("dcName", context.DcName),
-                ("runId", context.RunId));
+                ("runId", context.Run.Id));
 
             return deviceValidationPayloads;
         }

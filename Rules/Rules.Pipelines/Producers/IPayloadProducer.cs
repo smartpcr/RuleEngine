@@ -17,6 +17,6 @@ namespace Rules.Pipelines.Producers
     {
         Task<IEnumerable<(T Payload, ValidationRule Rule)>> Produce(EvaluationContext context, CancellationToken cancel);
 
-        ISourceBlock<(T Payload, ValidationRule Rule)> CreateProducerActivity(CancellationToken cancellationToken);
+        BufferBlock<(T Payload, ValidationRule Rule)> CreateProducerActivity(CancellationToken cancellationToken);
     }
 }
