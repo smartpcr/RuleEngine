@@ -52,7 +52,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\Models\DataCenterHealth.Models\DataCenterHealth.Models.csproj" />
+        <ProjectReference Include="..\..\Models\Models\Models.csproj" />
         <ProjectReference Include="..\Rules.Expressions\Rules.Expressions.csproj" />
     </ItemGroup>
 

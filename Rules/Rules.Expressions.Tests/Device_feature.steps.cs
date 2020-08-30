@@ -20,12 +20,12 @@ namespace Rules.Expressions.Tests
 
     public partial class Device_feature : FeatureFixture
     {
-        private ElectricalDevice evaluationContext;
+        private Device evaluationContext;
         private IConditionExpression conditionExpression;
 
         private void A_device(string testFileName)
         {
-            evaluationContext = new JsonFixtureFile($"{testFileName}.json").JObjectOf<ElectricalDevice>();
+            evaluationContext = new JsonFixtureFile($"{testFileName}.json").JObjectOf<Device>();
         }
 
         private void I_evaluate_device_with_condition(string left, Operator op, string right, params string[] additionalArgs)
@@ -42,7 +42,7 @@ namespace Rules.Expressions.Tests
         private void Evaluation_results_should_be(Verifiable<bool> expected)
         {
             var builder = new ExpressionBuilder();
-            var lambda = builder.Build<ElectricalDevice>(conditionExpression);
+            var lambda = builder.Build<Device>(conditionExpression);
             var actual = lambda(evaluationContext);
             expected.SetActual(actual);
         }

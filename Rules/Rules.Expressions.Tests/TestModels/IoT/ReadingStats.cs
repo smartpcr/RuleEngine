@@ -12,6 +12,7 @@ namespace Rules.Expressions.Tests.TestModels.IoT
     {
         public string DcName { get; set; }
         public string DeviceName { get; set; }
+        public string DataPoint { get; set; }
         public string ChannelType { get; set; }
         public string Channel { get; set; }
         public DateTime MaxEventTime { get; set; }

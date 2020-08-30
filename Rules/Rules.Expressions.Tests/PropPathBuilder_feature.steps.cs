@@ -29,7 +29,7 @@ namespace Rules.Expressions.Tests
         private void Current_path(string currentPath)
         {
             startsWith = currentPath;
-            var propPathBuilder = new PropertyPathBuilder<ElectricalDevice>(
+            var propPathBuilder = new PropertyPathBuilder<Device>(
                 new MockPropExpressionBuilder(),
                 new MockPropValuesProvider());
             allPropPaths = propPathBuilder.AllPropPaths;

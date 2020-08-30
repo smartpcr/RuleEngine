@@ -45,7 +45,7 @@ I want to be able to discover property paths of device")]
         [DataRow("", "DeviceType", typeof(DeviceType))]
         [DataRow("", "Hierarchy", typeof(string))]
         [DataRow("", "KvaRating", typeof(decimal?))]
-        [DataRow("", "PrimaryParentDevice", typeof(ElectricalDevice))]
+        [DataRow("", "PrimaryParentDevice", typeof(Device))]
         public void Should_be_able_to_discover_simple_prop(string current, string expectedNextPart, Type expectedNextType)
         {
             Runner.RunScenario(
@@ -54,7 +54,7 @@ I want to be able to discover property paths of device")]
         }
 
         [Scenario]
-        [DataRow("", "Children", typeof(List<ElectricalDevice>))]
+        [DataRow("", "Children", typeof(List<Device>))]
         [DataRow("Children", "Count()", typeof(int))]
         [DataRow("ReadingStats", "Select(DataPoint)", typeof(IEnumerable<string>))]
         [DataRow("ReadingStats.Select(DataPoint)", "Count()", typeof(int))]

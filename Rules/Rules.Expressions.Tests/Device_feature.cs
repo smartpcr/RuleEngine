@@ -26,7 +26,7 @@ I want to able to evaluate all properties of device")]
         [DataRow("DeviceType", "in", "Breaker", true, 1.0)]
         [DataRow("deviceState", "equals", "NormallyClosed", true, 1.0)]
         [DataRow("hierarchy", "equals", "LVS-Colo", true, 1.0)]
-        [DataRow("ampRating", "isNull", "", true, 1.0)]
+        [DataRow("kwRating", "isNull", "", true, 1.0)]
         [DataRow("primaryParent", "contains", "AMS05-COLO1-UPS01", true, 1.0)]
         [DataRow("panelName", "contains", "AMS05-COLO1-UPS01", true, 1.0)]
         [DataRow("amperage", "greaterThan", "1250", false, 1.0)] // score is 1 because there is no defference
@@ -51,7 +51,6 @@ I want to able to evaluate all properties of device")]
         [DataRow("children", "isEmpty", "", true, 1.0)]
         [DataRow("rootDevice.hierarchy", "in", "MVS-SubStation", true, 1.0)]
         [DataRow("rootDevice", "isNull", "", false, 0.0)]
-        [DataRow("siblingDevices.Count", "equals", "0", true, 1.0)]
         public void Should_be_able_to_validate_relations(string left, string actualOp, string right, bool shouldPass, double expectedScore)
         {
             var op = (Operator) Enum.Parse(typeof(Operator), actualOp, true);

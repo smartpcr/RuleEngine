@@ -26,15 +26,15 @@ namespace Rules.Expressions.Tests
 
     public partial class DeviceValidation_feature : FeatureFixture
     {
-        private ElectricalDevice evaluationContext;
+        private Device evaluationContext;
         private IConditionExpression whenCondition;
-        private Func<ElectricalDevice, bool> filter;
+        private Func<Device, bool> filter;
         private IConditionExpression ifCondition;
-        private Func<ElectricalDevice, bool> assert;
+        private Func<Device, bool> assert;
 
         private void A_device(string testFileName)
         {
-            evaluationContext = new JsonFixtureFile($"{testFileName}.json").JObjectOf<ElectricalDevice>();
+            evaluationContext = new JsonFixtureFile($"{testFileName}.json").JObjectOf<Device>();
             var random = new Random();
             foreach (var reading in evaluationContext.LastReadings)
             {
@@ -50,7 +50,7 @@ namespace Rules.Expressions.Tests
         {
             whenCondition = filterCondition;
             IExpressionBuilder builder = new ExpressionBuilder();
-            filter = builder.Build<ElectricalDevice>(whenCondition);
+            filter = builder.Build<Device>(whenCondition);
         }
 
         private void I_use_json_rule(string jsonRuleFile)
@@ -61,12 +61,12 @@ namespace Rules.Expressions.Tests
             var whenExpression = JObject.Parse(rule.WhenExpression);
             StepExecution.Current.Comment($"Current filter:\n{whenExpression.FormatObject()}\n");
             whenCondition = parser.Parse(whenExpression);
-            filter = builder.Build<ElectricalDevice>(whenCondition);
+            filter = builder.Build<Device>(whenCondition);
 
             var ifExpression = JObject.Parse(rule.IfExpression);
             StepExecution.Current.Comment($"Current assert:\n{ifExpression.FormatObject()}\n");
             ifCondition = parser.Parse(ifExpression);
-            assert = builder.Build<ElectricalDevice>(ifCondition);
+            assert = builder.Build<Device>(ifCondition);
         }
 
         private void Context_should_pass_filter(Verifiable<bool> expected)
