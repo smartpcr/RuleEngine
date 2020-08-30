@@ -14,7 +14,7 @@ namespace Rules.Expressions.Tests
     using Microsoft.VisualStudio.TestTools.UnitTesting;
     using Rules.Expressions;
     using Rules.Expressions.Evaluators;
-    using TestData;
+    using TestModels;
 
     public partial class Evaluator_feature : FeatureFixture
     {

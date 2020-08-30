@@ -9,23 +9,23 @@
 namespace Rules.Expressions.Tests
 {
     using System.Linq;
-    using DataCenterHealth.Models.Devices;
     using Eval;
     using LightBDD.Framework;
     using LightBDD.Framework.Parameters;
     using LightBDD.MsTest2;
     using Rules.Expressions;
     using Rules.Expressions.Evaluators;
-    using Rules.Expressions.Tests.TestData;
+    using TestModels;
+    using TestModels.IoT;
 
     public partial class Device_feature : FeatureFixture
     {
-        private PowerDevice evaluationContext;
+        private ElectricalDevice evaluationContext;
         private IConditionExpression conditionExpression;
 
         private void A_device(string testFileName)
         {
-            evaluationContext = new JsonFixtureFile($"{testFileName}.json").JObjectOf<PowerDevice>();
+            evaluationContext = new JsonFixtureFile($"{testFileName}.json").JObjectOf<ElectricalDevice>();
         }
 
         private void I_evaluate_device_with_condition(string left, Operator op, string right, params string[] additionalArgs)
@@ -42,7 +42,7 @@ namespace Rules.Expressions.Tests
         private void Evaluation_results_should_be(Verifiable<bool> expected)
         {
             var builder = new ExpressionBuilder();
-            var lambda = builder.Build<PowerDevice>(conditionExpression);
+            var lambda = builder.Build<ElectricalDevice>(conditionExpression);
             var actual = lambda(evaluationContext);
             expected.SetActual(actual);
         }

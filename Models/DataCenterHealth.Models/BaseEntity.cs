@@ -1,28 +1,27 @@
-// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="EntityBase.cs" company="Microsoft Corporation">
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="BaseEntity.cs" company="Microsoft Corporation">
 //   Copyright (c) 2020 Microsoft Corporation.  All rights reserved.
 // </copyright>
-// <summary>
-// </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace DataCenterHealth.Models
+namespace Models
 {
     using System;
+    using Common.DocDb;
     using Newtonsoft.Json;
-    using Newtonsoft.Json.Converters;
 
     public abstract class BaseEntity
     {
         protected BaseEntity()
         {
+            Id = Guid.NewGuid().ToString("D");
             TS = DateTime.UtcNow; // this will always be overwritten by docdb
         }
 
         [JsonProperty("id")] public string Id { get; set; }
 
         [JsonProperty(PropertyName = "_ts")]
-        [JsonConverter(typeof(UnixDateTimeConverter))]
+        [JsonConverter(typeof(UnixEpochTimeConverter))]
         public DateTime TS { get; set; }
     }
 }

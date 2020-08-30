@@ -11,30 +11,30 @@ namespace Rules.Expressions.Tests
     using System;
     using System.Collections.Generic;
     using System.Linq.Expressions;
-    using DataCenterHealth.Models.Devices;
-    using DataCenterHealth.Models.Rules;
     using LightBDD.Framework;
     using LightBDD.Framework.Parameters;
     using LightBDD.MsTest2;
+    using Models.Rules;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
     using Rules.Expressions.Eval;
     using Rules.Expressions.Evaluators;
     using Rules.Expressions.Helpers;
     using Rules.Expressions.Parsers;
-    using Rules.Expressions.Tests.TestData;
+    using TestModels;
+    using TestModels.IoT;
 
     public partial class DeviceValidation_feature : FeatureFixture
     {
-        private PowerDevice evaluationContext;
+        private ElectricalDevice evaluationContext;
         private IConditionExpression whenCondition;
-        private Func<PowerDevice, bool> filter;
+        private Func<ElectricalDevice, bool> filter;
         private IConditionExpression ifCondition;
-        private Func<PowerDevice, bool> assert;
+        private Func<ElectricalDevice, bool> assert;
 
         private void A_device(string testFileName)
         {
-            evaluationContext = new JsonFixtureFile($"{testFileName}.json").JObjectOf<PowerDevice>();
+            evaluationContext = new JsonFixtureFile($"{testFileName}.json").JObjectOf<ElectricalDevice>();
             var random = new Random();
             foreach (var reading in evaluationContext.LastReadings)
             {
@@ -50,23 +50,23 @@ namespace Rules.Expressions.Tests
         {
             whenCondition = filterCondition;
             IExpressionBuilder builder = new ExpressionBuilder();
-            filter = builder.Build<PowerDevice>(whenCondition);
+            filter = builder.Build<ElectricalDevice>(whenCondition);
         }
 
         private void I_use_json_rule(string jsonRuleFile)
         {
             var parser = new ExpressionParser();
             IExpressionBuilder builder = new ExpressionBuilder();
-            var rule = new JsonFixtureFile($"{jsonRuleFile}.json").JObjectOf<ValidationRule>();
+            var rule = new JsonFixtureFile($"{jsonRuleFile}.json").JObjectOf<Rule>();
             var whenExpression = JObject.Parse(rule.WhenExpression);
             StepExecution.Current.Comment($"Current filter:\n{whenExpression.FormatObject()}\n");
             whenCondition = parser.Parse(whenExpression);
-            filter = builder.Build<PowerDevice>(whenCondition);
+            filter = builder.Build<ElectricalDevice>(whenCondition);
 
             var ifExpression = JObject.Parse(rule.IfExpression);
             StepExecution.Current.Comment($"Current assert:\n{ifExpression.FormatObject()}\n");
             ifCondition = parser.Parse(ifExpression);
-            assert = builder.Build<PowerDevice>(ifCondition);
+            assert = builder.Build<ElectricalDevice>(ifCondition);
         }
 
         private void Context_should_pass_filter(Verifiable<bool> expected)

@@ -14,18 +14,17 @@ namespace Rules.Expressions.Helpers
     using System.Reflection;
     using System.Text.RegularExpressions;
     using Common.Config;
-    using DataCenterHealth.Models.Devices;
 
     public class PropertyPathBuilder<T> where T: class
     {
-        private static readonly Regex PartSplitter = new Regex(@"\.(?![^(]*\))", RegexOptions.Compiled); // only matches dot (.) outside parenthesis
+        private readonly Regex partSplitter = new Regex(@"\.(?![^(]*\))", RegexOptions.Compiled); // only matches dot (.) outside parenthesis
         private readonly IPropertyExpression propExpand;
         private readonly IPropertyValuesProvider propValuesProvider;
         private readonly List<FunctionName> aggregateFunctions;
         private readonly int maxDepth;
         private readonly int maxDuplicates;
         private readonly object syncLock = new object();
-        private static List<PropertyPath> allPropPaths;
+        private List<PropertyPath> allPropPaths;
 
         public PropertyPathBuilder(
             IPropertyExpression propertyExpand,
@@ -85,7 +84,7 @@ namespace Rules.Expressions.Helpers
 
         public List<PropertyPath> GetRootFieldParts()
         {
-            var rootParts = AllPropPaths.Where(pt => PartSplitter.Split(pt.Path).Length == 1).ToList();
+            var rootParts = AllPropPaths.Where(pt => partSplitter.Split(pt.Path).Length == 1).ToList();
             return rootParts;
         }
 
@@ -93,13 +92,13 @@ namespace Rules.Expressions.Helpers
         {
             if (string.IsNullOrEmpty(current))
             {
-                var firstParts = AllPropPaths.Where(pt => PartSplitter.Split(pt.Path).Length == 1).ToList();
+                var firstParts = AllPropPaths.Where(pt => partSplitter.Split(pt.Path).Length == 1).ToList();
                 return firstParts;
             }
 
-            var currentDepth = PartSplitter.Split(current).Length;
+            var currentDepth = partSplitter.Split(current).Length;
             var nextParts = AllPropPaths.Where(pt => pt.Path.StartsWith(current, StringComparison.OrdinalIgnoreCase))
-                .Where(pt => pt.Path != current && PartSplitter.Split(pt.Path).Length <= currentDepth + 1)
+                .Where(pt => pt.Path != current && partSplitter.Split(pt.Path).Length <= currentDepth + 1)
                 .ToList();
             return nextParts;
         }
@@ -114,7 +113,7 @@ namespace Rules.Expressions.Helpers
                 return;
             }
 
-            if (PartSplitter.Split(currentPath).Length > maxDepth) return;
+            if (partSplitter.Split(currentPath).Length > maxDepth) return;
 
             var iteration = new Queue<(string path, Type type, bool scalarPropsOnly)>();
 
@@ -226,7 +225,7 @@ namespace Rules.Expressions.Helpers
             var childProps = itemType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
                 .Where(p => propExpand.CanQuery(itemType, p));
             var iteration = new Queue<(string path, Type type, bool scalarPropsOnly)>();
-            var currentParts = PartSplitter.Split(currentPath ?? "");
+            var currentParts = partSplitter.Split(currentPath ?? "");
             var lastPart = currentParts[currentParts.Length -1];
 
             if (scalarPropsOnly)
@@ -339,7 +338,7 @@ namespace Rules.Expressions.Helpers
 
         private (int dupTypeCount, int dupPropCount) CheckDuplication(List<PropertyPath> existingPaths, string currentPath, Type currentType)
         {
-            var currentParts = PartSplitter.Split(currentPath);
+            var currentParts = partSplitter.Split(currentPath);
 
             var ancestorPaths = Enumerable.Range(1, currentParts.Length).Select(size => string.Join(".", currentParts.Take(size))).ToList();
             var dupTypeCount = currentType.IsPrimitiveType() || currentType == typeof(string)
@@ -459,7 +458,7 @@ namespace Rules.Expressions.Helpers
                     Operator.IsEmpty,
                     Operator.NotIsEmpty
                 };
-                if (itemType == typeof(string) || itemType.IsEnum)
+                if (itemType == typeof(string) || itemType!.IsEnum)
                 {
                     collectionOperators.AddRange(new[]
                     {
@@ -485,7 +484,7 @@ namespace Rules.Expressions.Helpers
                 return collectionOperators.Select(op => op.ToString()).ToList();
             }
 
-            if (type == typeof(PowerDevice))
+            if (!type.IsPrimitiveType())
             {
                 var extensionMethods = type.GetExtensionMethods()
                     .Where(m => m.GetParameters().Length > 1).ToList();
@@ -508,7 +507,7 @@ namespace Rules.Expressions.Helpers
         public List<FunctionName> GetAllowedFunctionsForPropValue(string propPath)
         {
             var partType = AllPropPaths.FirstOrDefault(pt => pt.Path == propPath);
-            if (partType.Path != null)
+            if (partType!.Path != null)
             {
                 if (partType.Type.IsDateType() || Nullable.GetUnderlyingType(partType.Type)?.IsDateType() == true)
                 {

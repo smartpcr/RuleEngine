@@ -13,7 +13,7 @@ namespace Rules.Expressions.Tests
     using LightBDD.MsTest2;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
     using Rules.Expressions;
-    using TestData;
+    using TestModels;
 
     [FeatureDescription(
         @"In order to validate rules

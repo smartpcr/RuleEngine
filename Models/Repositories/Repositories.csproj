@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <RootNamespace>Repositories</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Common\Common.DocDb\Common.DocDb.csproj" />
+      <ProjectReference Include="..\..\Common\Common.Kusto\Common.Kusto.csproj" />
+      <ProjectReference Include="..\DataCenterHealth.Models\DataCenterHealth.Models.csproj" />
+    </ItemGroup>
+
+</Project>

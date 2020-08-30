@@ -19,7 +19,7 @@ namespace Rules.Expressions.Tests
     using Newtonsoft.Json.Linq;
     using Rules.Expressions;
     using Rules.Expressions.Evaluators;
-    using TestData;
+    using TestModels;
 
     public partial class Functions_feature : FeatureFixture
     {

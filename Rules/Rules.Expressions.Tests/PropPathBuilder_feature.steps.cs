@@ -12,12 +12,12 @@ namespace Rules.Expressions.Tests
     using System.Collections.Generic;
     using System.Linq;
     using System.Text.RegularExpressions;
-    using DataCenterHealth.Models.Devices;
     using FluentAssertions;
     using LightBDD.Framework;
     using LightBDD.MsTest2;
     using Rules.Expressions.Helpers;
-    using Rules.Expressions.Tests.Mocks;
+    using TestModels;
+    using TestModels.IoT;
 
     public partial class PropPathBuilder_feature: FeatureFixture
     {
@@ -29,7 +29,7 @@ namespace Rules.Expressions.Tests
         private void Current_path(string currentPath)
         {
             startsWith = currentPath;
-            var propPathBuilder = new PropertyPathBuilder<PowerDevice>(
+            var propPathBuilder = new PropertyPathBuilder<ElectricalDevice>(
                 new MockPropExpressionBuilder(),
                 new MockPropValuesProvider());
             allPropPaths = propPathBuilder.AllPropPaths;

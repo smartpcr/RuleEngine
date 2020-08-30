@@ -10,11 +10,12 @@ namespace Rules.Expressions.Tests
 {
     using System;
     using System.Collections.Generic;
-    using DataCenterHealth.Models.Devices;
     using LightBDD.Framework;
     using LightBDD.Framework.Scenarios;
     using LightBDD.MsTest2;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using TestModels;
+    using TestModels.IoT;
 
     [FeatureDescription(
         @"In order to build validation expression
@@ -44,7 +45,7 @@ I want to be able to discover property paths of device")]
         [DataRow("", "DeviceType", typeof(DeviceType))]
         [DataRow("", "Hierarchy", typeof(string))]
         [DataRow("", "KvaRating", typeof(decimal?))]
-        [DataRow("", "PrimaryParentDevice", typeof(PowerDevice))]
+        [DataRow("", "PrimaryParentDevice", typeof(ElectricalDevice))]
         public void Should_be_able_to_discover_simple_prop(string current, string expectedNextPart, Type expectedNextType)
         {
             Runner.RunScenario(
@@ -53,12 +54,12 @@ I want to be able to discover property paths of device")]
         }
 
         [Scenario]
-        [DataRow("", "Children", typeof(List<PowerDevice>))]
+        [DataRow("", "Children", typeof(List<ElectricalDevice>))]
         [DataRow("Children", "Count()", typeof(int))]
         [DataRow("ReadingStats", "Select(DataPoint)", typeof(IEnumerable<string>))]
         [DataRow("ReadingStats.Select(DataPoint)", "Count()", typeof(int))]
-        [DataRow("ReadingStats", "OrderByDesc(Avg)", typeof(IEnumerable<ZenonEventStats>))]
-        [DataRow("LastReadings", "Where(DataPoint, Equals, 'Pwr.kW tot')", typeof(IEnumerable<ZenonLastReading>))]
+        [DataRow("ReadingStats", "OrderByDesc(Avg)", typeof(IEnumerable<ReadingStats>))]
+        [DataRow("LastReadings", "Where(DataPoint, Equals, 'Pwr.kW tot')", typeof(IEnumerable<LastReading>))]
         [DataRow("LastReadings", "Select(Value)", typeof(IEnumerable<decimal>))]
         public void Should_be_able_to_discover_collection_prop(string current, string expectedNextPart, Type expectedNextType)
         {
@@ -68,7 +69,7 @@ I want to be able to discover property paths of device")]
         }
 
         [Scenario]
-        [DataRow("ReadingStats.OrderByDesc(Avg)", "First()", typeof(ZenonEventStats))]
+        [DataRow("ReadingStats.OrderByDesc(Avg)", "First()", typeof(ReadingStats))]
         public void Should_be_able_to_order_and_pick_collections(string current, string expectedNextPart, Type expectedNextType)
         {
             Runner.RunScenario(
@@ -81,7 +82,7 @@ I want to be able to discover property paths of device")]
         {
             Runner.RunScenario(
                 given => Current_path("ReadingStats.OrderByDesc(Avg)"),
-                then => Next_parts_should_contain("Where(DataPoint, Equals, 'Pwr.kW tot')", typeof(IEnumerable<ZenonEventStats>)));
+                then => Next_parts_should_contain("Where(DataPoint, Equals, 'Pwr.kW tot')", typeof(IEnumerable<ReadingStats>)));
         }
 
         [Scenario]

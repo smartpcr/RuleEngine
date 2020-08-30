@@ -1,12 +1,10 @@
-// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="BaseEntity.cs" company="Microsoft Corporation">
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="TrackableEntity.cs" company="Microsoft Corporation">
 //   Copyright (c) 2020 Microsoft Corporation.  All rights reserved.
 // </copyright>
-// <summary>
-// </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace DataCenterHealth.Models
+namespace Models
 {
     using System;
 
@@ -16,5 +14,13 @@ namespace DataCenterHealth.Models
         public DateTime CreationTime { get; set; }
         public string ModifiedBy { get; set; }
         public DateTime ModificationTime { get; set; }
+
+        protected TrackableEntity()
+        {
+            CreatedBy = Environment.UserName;
+            ModifiedBy = Environment.UserName;
+            ModificationTime = DateTime.UtcNow;
+            CreationTime = DateTime.UtcNow;
+        }
     }
 }
