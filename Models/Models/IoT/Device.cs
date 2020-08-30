@@ -4,13 +4,10 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace Rules.Expressions.Tests.TestModels.IoT
+namespace Models.IoT
 {
-    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations.Schema;
-    using Contexts;
-    using Newtonsoft.Json;
 
     public class Device : DeviceData
     {
@@ -26,19 +23,5 @@ namespace Rules.Expressions.Tests.TestModels.IoT
         
         [NotMapped] public List<DataPoint> DataPoints { get; set; }
         
-        #region evaluation
-        [JsonIgnore, NotMapped] public EvaluationContext EvaluationContext { get; set; }
-
-        [JsonIgnore, NotMapped] public ConcurrentDictionary<string, EvaluationEvidence> EvidencesByRule { get; private set; }
-
-        public void AddEvaluationEvidence(EvaluationEvidence evidence)
-        {
-            if (EvaluationContext.CurrentRuleId.Value != null)
-            {
-                EvidencesByRule ??= new ConcurrentDictionary<string, EvaluationEvidence>();
-                EvidencesByRule.AddOrUpdate(EvaluationContext.CurrentRuleId.Value, evidence, (key, value) => evidence);
-            }
-        }
-        #endregion
     }
 }

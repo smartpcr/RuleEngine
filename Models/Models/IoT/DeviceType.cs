@@ -1,4 +1,4 @@
-﻿namespace Rules.Expressions.Tests.TestModels.IoT
+﻿namespace Models.IoT
 {
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;

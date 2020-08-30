@@ -13,6 +13,7 @@ namespace Rules.Expressions.Tests
     using LightBDD.Framework;
     using LightBDD.Framework.Parameters;
     using LightBDD.MsTest2;
+    using Models.IoT;
     using Rules.Expressions;
     using Rules.Expressions.Evaluators;
     using TestModels;

@@ -14,6 +14,7 @@ namespace Rules.Expressions.Tests
     using LightBDD.Framework.Scenarios;
     using LightBDD.MsTest2;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using Models.IoT;
     using TestModels;
     using TestModels.IoT;
 

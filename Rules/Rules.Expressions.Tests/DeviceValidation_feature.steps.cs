@@ -14,6 +14,7 @@ namespace Rules.Expressions.Tests
     using LightBDD.Framework;
     using LightBDD.Framework.Parameters;
     using LightBDD.MsTest2;
+    using Models.IoT;
     using Models.Rules;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;

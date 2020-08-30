@@ -4,7 +4,7 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace Rules.Expressions.Tests.TestModels.IoT
+namespace Models.IoT
 {
     public class DeviceAssociation
     {

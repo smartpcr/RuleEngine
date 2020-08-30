@@ -15,6 +15,7 @@ namespace Rules.Expressions.Tests
     using FluentAssertions;
     using LightBDD.Framework;
     using LightBDD.MsTest2;
+    using Models.IoT;
     using Rules.Expressions.Helpers;
     using TestModels;
     using TestModels.IoT;
