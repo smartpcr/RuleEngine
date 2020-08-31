@@ -12,17 +12,9 @@ namespace Rules.Expressions.Evaluators
     using System.Linq.Expressions;
     using Rules.Expressions;
 
-    public interface IExpressionBuilder
+    public class ExpressionEvaluator : IExpressionEvaluator
     {
-        Func<T, bool> Build<T>(IConditionExpression conditionExpression) where T : class;
-
-        Delegate Build(IConditionExpression conditionExpression, Type contextType);
-
-    }
-
-    public class ExpressionBuilder : IExpressionBuilder
-    {
-        public Func<T, bool> Build<T>(IConditionExpression conditionExpression) where T : class
+        public Func<T, bool> Evaluate<T>(IConditionExpression conditionExpression) where T : class
         {
             var contextType = typeof(T);
             var contextParameter = Expression.Parameter(contextType, "ctx");
@@ -33,7 +25,7 @@ namespace Rules.Expressions.Evaluators
         }
 
         [Obsolete("should use alternative method that pass in generic type, since this method requires call to DynamicInvoke, which is slow")]
-        public Delegate Build(IConditionExpression conditionExpression, Type contextType)
+        public Delegate Evaluate(IConditionExpression conditionExpression, Type contextType)
         {
             var contextParameter = Expression.Parameter(contextType, "ctx");
             var expression = conditionExpression.Process(contextParameter, contextType);

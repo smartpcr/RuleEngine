@@ -12,6 +12,7 @@ namespace Rules.Expressions.Tests
     using System.Collections.Generic;
     using System.Linq;
     using System.Text.RegularExpressions;
+    using Builders;
     using FluentAssertions;
     using LightBDD.Framework;
     using LightBDD.MsTest2;

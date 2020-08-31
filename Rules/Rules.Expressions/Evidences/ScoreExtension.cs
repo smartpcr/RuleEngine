@@ -6,12 +6,13 @@
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace Rules.Expressions.Eval
+namespace Rules.Expressions.Evidences
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Linq.Expressions;
+    using Evaluators;
     using Helpers;
     using Newtonsoft.Json.Linq;
 
@@ -22,7 +23,7 @@ namespace Rules.Expressions.Eval
         public static Func<T, double> GetScore<T>(this LeafExpression leafExpression)
         {
             var ctxExpression = Expression.Parameter(typeof(T), "ctx");
-            var targetExpression = ctxExpression.BuildExpression(
+            var targetExpression = ctxExpression.EvaluateExpression(
                 leafExpression.Left,
                 leafExpression.Operator != Operator.IsNull && leafExpression.Operator != Operator.NotIsNull);
 

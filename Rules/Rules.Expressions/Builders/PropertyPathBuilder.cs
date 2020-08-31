@@ -6,7 +6,7 @@
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace Rules.Expressions.Helpers
+namespace Rules.Expressions.Builders
 {
     using System;
     using System.Collections.Generic;
@@ -14,6 +14,7 @@ namespace Rules.Expressions.Helpers
     using System.Reflection;
     using System.Text.RegularExpressions;
     using Common.Config;
+    using Helpers;
 
     public class PropertyPathBuilder<T> where T: class
     {
@@ -35,15 +36,7 @@ namespace Rules.Expressions.Helpers
             this.propValuesProvider = propValuesProvider;
             this.maxDepth = maxDepth;
             this.maxDuplicates = maxDuplicates;
-            aggregateFunctions=new List<FunctionName>()
-            {
-                FunctionName.Count,
-                FunctionName.DistinctCount,
-                FunctionName.Max,
-                FunctionName.Min,
-                FunctionName.Average,
-                FunctionName.Sum
-            };
+            aggregateFunctions = Enum.GetValues(typeof(FunctionName)).OfType<FunctionName>().Where(f => f.IsAggregateFunction()).ToList();
         }
 
         public List<PropertyPath> AllPropPaths

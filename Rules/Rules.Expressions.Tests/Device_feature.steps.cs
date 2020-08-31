@@ -9,7 +9,7 @@
 namespace Rules.Expressions.Tests
 {
     using System.Linq;
-    using Eval;
+    using Evidences;
     using LightBDD.Framework;
     using LightBDD.Framework.Parameters;
     using LightBDD.MsTest2;
@@ -42,8 +42,8 @@ namespace Rules.Expressions.Tests
 
         private void Evaluation_results_should_be(Verifiable<bool> expected)
         {
-            var builder = new ExpressionBuilder();
-            var lambda = builder.Build<Device>(conditionExpression);
+            var builder = new ExpressionEvaluator();
+            var lambda = builder.Evaluate<Device>(conditionExpression);
             var actual = lambda(evaluationContext);
             expected.SetActual(actual);
         }

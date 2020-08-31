@@ -45,16 +45,16 @@ namespace Rules.Expressions.Tests
 
         private void Evaluation_results_should_be(Verifiable<bool> expected)
         {
-            var builder = new ExpressionBuilder();
+            var builder = new ExpressionEvaluator();
             bool actual = false;
             if (evaluationContext is Location location)
             {
-                var lambda = builder.Build<Location>(conditionExpression);
+                var lambda = builder.Evaluate<Location>(conditionExpression);
                 actual = lambda(location);
             }
             else if (evaluationContext is Person person)
             {
-                var lambda = builder.Build<Person>(conditionExpression);
+                var lambda = builder.Evaluate<Person>(conditionExpression);
                 actual = lambda(person);
             }
             else

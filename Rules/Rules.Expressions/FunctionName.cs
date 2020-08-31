@@ -105,5 +105,21 @@ namespace Rules.Expressions
             var functionNames = GetAllFunctionNames();
             return functionNames.Select(f => $@"^({f})\((.*)\)$").ToList();
         }
+
+        public static bool IsAggregateFunction(this FunctionName functionName)
+        {
+            switch (functionName)
+            {
+                case FunctionName.Average:
+                case FunctionName.Count:
+                case FunctionName.DistinctCount:
+                case FunctionName.Max:
+                case FunctionName.Min:
+                case FunctionName.Sum:
+                    return true;
+                default:
+                    return false;
+            }
+        }
     }
 }

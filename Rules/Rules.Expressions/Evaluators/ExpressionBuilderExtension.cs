@@ -6,7 +6,7 @@
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace Rules.Expressions.Helpers
+namespace Rules.Expressions.Evaluators
 {
     using System;
     using System.Collections.Generic;
@@ -15,11 +15,12 @@ namespace Rules.Expressions.Helpers
     using System.Text.RegularExpressions;
     using Common.Config;
     using Functions;
-    using Rules.Expressions.Macros;
+    using Helpers;
+    using Macros;
 
     public static class ExpressionBuilderExtension
     {
-        public static Expression BuildExpression(this ParameterExpression contextExpression, string propPath, bool handleNullableType = true)
+        public static Expression EvaluateExpression(this ParameterExpression contextExpression, string propPath, bool handleNullableType = true)
         {
             var parts = SplitPropPath(propPath);
             Expression targetExpression = contextExpression;
@@ -193,7 +194,7 @@ namespace Rules.Expressions.Helpers
                 var macroName = methodRegex.Match(field).Groups[1].Value;
                 var macroArgs = methodRegex.Match(field).Groups[2].Value;
                 var args = macroArgs.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries).Select(a => a.Trim()).ToArray();
-                var extensionMethods = parentExpression.Type.GetExtensionMethods();
+                var extensionMethods = parentExpression.Type.GetExtensionMethods()?.ToArray();
                 if (extensionMethods?.Any() == true)
                 {
                     var extensionMethod = extensionMethods.FirstOrDefault(m => m.Name == macroName);

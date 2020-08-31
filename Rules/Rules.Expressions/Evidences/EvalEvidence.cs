@@ -6,7 +6,7 @@
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace Rules.Expressions.Eval
+namespace Rules.Expressions.Evidences
 {
     using System;
     using Newtonsoft.Json.Linq;

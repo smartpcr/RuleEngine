@@ -9,6 +9,7 @@ namespace Rules.Expressions.Tests.TestModels.IoT
     using System;
     using System.Collections.Generic;
     using System.Reflection;
+    using Builders;
     using Helpers;
 
     public class MockPropExpressionBuilder : IPropertyExpression

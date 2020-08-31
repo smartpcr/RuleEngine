@@ -40,24 +40,24 @@ namespace Rules.Expressions.Tests
 
         private void Evaluation_results_should_be(Verifiable<bool> expected)
         {
-            var builder = new ExpressionBuilder();
+            var builder = new ExpressionEvaluator();
             bool actual = false;
             JArray evidence = null;
             if (evaluationContext is Location location)
             {
-                var lambda = builder.Build<Location>(conditionExpression);
+                var lambda = builder.Evaluate<Location>(conditionExpression);
                 actual = lambda(location);
                 evidence = GetEvidence(conditionExpression, location);
             }
             else if (evaluationContext is Person person)
             {
-                var lambda = builder.Build<Person>(conditionExpression);
+                var lambda = builder.Evaluate<Person>(conditionExpression);
                 actual = lambda(person);
                 evidence = GetEvidence(conditionExpression, person);
             }
             else if (evaluationContext is TreeNode treeNode)
             {
-                var lambda = builder.Build<TreeNode>(conditionExpression);
+                var lambda = builder.Evaluate<TreeNode>(conditionExpression);
                 actual = lambda(treeNode);
                 evidence = GetEvidence(conditionExpression, treeNode);
             }
@@ -82,7 +82,7 @@ namespace Rules.Expressions.Tests
             foreach(var leafExpr in leafEvaluators)
             {
                 var ctxParameter = Expression.Parameter(typeof(T), "ctx");
-                var leftExpression = ctxParameter.BuildExpression(leafExpr.Left);
+                var leftExpression = ctxParameter.EvaluateExpression(leafExpr.Left);
                 var lambda = Expression.Lambda(leftExpression, ctxParameter);
                 var getValue = lambda.Compile();
                 var actualObj = getValue.DynamicInvoke(instance);
@@ -90,7 +90,7 @@ namespace Rules.Expressions.Tests
                 string expected = leafExpr.Right;
                 if (leafExpr.RightSideIsExpression)
                 {
-                    var rightExpression = ctxParameter.BuildExpression(leafExpr.Right);
+                    var rightExpression = ctxParameter.EvaluateExpression(leafExpr.Right);
                     lambda = Expression.Lambda(rightExpression, ctxParameter);
                     getValue = lambda.Compile();
                     var expectedObj = getValue.DynamicInvoke(instance);

@@ -15,8 +15,6 @@ namespace Rules.Expressions.Tests
     using LightBDD.MsTest2;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
     using Models.IoT;
-    using TestModels;
-    using TestModels.IoT;
 
     [FeatureDescription(
         @"In order to build validation expression

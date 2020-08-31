@@ -6,7 +6,7 @@
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace Rules.Expressions.Helpers
+namespace Rules.Expressions.Builders
 {
     using System;
     using System.Collections.Generic;

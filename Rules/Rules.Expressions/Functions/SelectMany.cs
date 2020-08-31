@@ -12,6 +12,7 @@ namespace Rules.Expressions.Functions
     using System.Collections.Generic;
     using System.Linq;
     using System.Linq.Expressions;
+    using Evaluators;
     using Rules.Expressions.Helpers;
 
     public class SelectMany : FunctionExpression
@@ -48,7 +49,7 @@ namespace Rules.Expressions.Functions
             }
 
             var paramExpression = Expression.Parameter(itemType, "item");
-            var propExpression = paramExpression.BuildExpression(selectionPath);
+            var propExpression = paramExpression.EvaluateExpression(selectionPath);
             var propItemType = propExpression.Type.GetGenericArguments()[0];
             Type enumerableType = typeof(IEnumerable<>).MakeGenericType(propItemType);
             Type delegateType = typeof(Func<,>).MakeGenericType(itemType, enumerableType);

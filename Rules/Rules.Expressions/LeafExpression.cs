@@ -11,6 +11,7 @@ namespace Rules.Expressions
     using System;
     using System.Linq;
     using System.Linq.Expressions;
+    using Evaluators;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
     using Rules.Expressions.Helpers;
@@ -33,7 +34,7 @@ namespace Rules.Expressions
 
         public Expression Process(ParameterExpression ctxExpression, Type parameterType)
         {
-            var leftExpression = ctxExpression.BuildExpression(Left, false);
+            var leftExpression = ctxExpression.EvaluateExpression(Left, false);
             leftExpression = leftExpression.AddToStringWithEnumType();
             if (Operator != Operator.IsNull && Operator != Operator.NotIsNull)
             {
@@ -43,7 +44,7 @@ namespace Rules.Expressions
             Expression rightExpression;
             if (RightSideIsExpression)
             {
-                rightExpression = ctxExpression.BuildExpression(Right);
+                rightExpression = ctxExpression.EvaluateExpression(Right);
                 rightExpression = rightExpression.AddToStringWithEnumType().AddValueWithNullableNumberType();
             }
             else

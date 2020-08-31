@@ -12,6 +12,7 @@ namespace Rules.Expressions.Functions
     using System.Linq;
     using System.Linq.Expressions;
     using System.Reflection;
+    using Evaluators;
     using Helpers;
 
     public class Select : FunctionExpression
@@ -51,7 +52,7 @@ namespace Rules.Expressions.Functions
             }
 
             var paramExpression = Expression.Parameter(itemType, "item");
-            var propExpression = paramExpression.BuildExpression(selectionPath);
+            var propExpression = paramExpression.EvaluateExpression(selectionPath);
 
             Expression selectorExpression = Expression.Lambda(propExpression, paramExpression);
 

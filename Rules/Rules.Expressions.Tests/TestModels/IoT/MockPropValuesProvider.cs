@@ -10,6 +10,7 @@ namespace Rules.Expressions.Tests.TestModels.IoT
     using System.Collections.Generic;
     using System.Reflection;
     using System.Threading.Tasks;
+    using Builders;
     using Helpers;
 
     public class MockPropValuesProvider : IPropertyValuesProvider

@@ -11,6 +11,7 @@ namespace Rules.Expressions.Tests
     using System;
     using System.Collections.Generic;
     using System.Linq.Expressions;
+    using Evidences;
     using LightBDD.Framework;
     using LightBDD.Framework.Parameters;
     using LightBDD.MsTest2;
@@ -18,7 +19,6 @@ namespace Rules.Expressions.Tests
     using Models.Rules;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
-    using Rules.Expressions.Eval;
     using Rules.Expressions.Evaluators;
     using Rules.Expressions.Helpers;
     using Rules.Expressions.Parsers;
@@ -50,24 +50,24 @@ namespace Rules.Expressions.Tests
         private void A_filter_condition(IConditionExpression filterCondition)
         {
             whenCondition = filterCondition;
-            IExpressionBuilder builder = new ExpressionBuilder();
-            filter = builder.Build<Device>(whenCondition);
+            IExpressionEvaluator evaluator = new ExpressionEvaluator();
+            filter = evaluator.Evaluate<Device>(whenCondition);
         }
 
         private void I_use_json_rule(string jsonRuleFile)
         {
             var parser = new ExpressionParser();
-            IExpressionBuilder builder = new ExpressionBuilder();
+            IExpressionEvaluator evaluator = new ExpressionEvaluator();
             var rule = new JsonFixtureFile($"{jsonRuleFile}.json").JObjectOf<Rule>();
             var whenExpression = JObject.Parse(rule.WhenExpression);
             StepExecution.Current.Comment($"Current filter:\n{whenExpression.FormatObject()}\n");
             whenCondition = parser.Parse(whenExpression);
-            filter = builder.Build<Device>(whenCondition);
+            filter = evaluator.Evaluate<Device>(whenCondition);
 
             var ifExpression = JObject.Parse(rule.IfExpression);
             StepExecution.Current.Comment($"Current assert:\n{ifExpression.FormatObject()}\n");
             ifCondition = parser.Parse(ifExpression);
-            assert = builder.Build<Device>(ifCondition);
+            assert = evaluator.Evaluate<Device>(ifCondition);
         }
 
         private void Context_should_pass_filter(Verifiable<bool> expected)
@@ -114,7 +114,7 @@ namespace Rules.Expressions.Tests
             foreach(var leafExpr in leafEvaluators)
             {
                 var ctxParameter = Expression.Parameter(typeof(T), "ctx");
-                var leftExpression = ctxParameter.BuildExpression(leafExpr.Left);
+                var leftExpression = ctxParameter.EvaluateExpression(leafExpr.Left);
                 var lambda = Expression.Lambda(leftExpression, ctxParameter);
                 var getValue = lambda.Compile();
                 var actualObj = getValue.DynamicInvoke(instance);
@@ -122,7 +122,7 @@ namespace Rules.Expressions.Tests
                 string expected = leafExpr.Right;
                 if (leafExpr.RightSideIsExpression)
                 {
-                    var rightExpression = ctxParameter.BuildExpression(leafExpr.Right);
+                    var rightExpression = ctxParameter.EvaluateExpression(leafExpr.Right);
                     lambda = Expression.Lambda(rightExpression, ctxParameter);
                     getValue = lambda.Compile();
                     var expectedObj = getValue.DynamicInvoke(instance);

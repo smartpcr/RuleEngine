@@ -6,12 +6,12 @@
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace Rules.Expressions.Eval
+namespace Rules.Expressions.Evidences
 {
     using System;
     using System.Collections.Generic;
     using System.Linq.Expressions;
-    using Helpers;
+    using Evaluators;
     using Newtonsoft.Json.Linq;
 
     public static class EvidenceExtension
@@ -40,7 +40,7 @@ namespace Rules.Expressions.Eval
             {
                 var ctxParameter = Expression.Parameter(typeof(T), "ctx");
                 var leftExpression =
-                    ctxParameter.BuildExpression(leafExpr.Left, leafExpr.Operator != Operator.IsNull && leafExpr.Operator != Operator.NotIsNull);
+                    ctxParameter.EvaluateExpression(leafExpr.Left, leafExpr.Operator != Operator.IsNull && leafExpr.Operator != Operator.NotIsNull);
                 var leftType = leftExpression.Type;
                 var lambda = Expression.Lambda(leftExpression, ctxParameter);
                 var getValue = lambda.Compile();
@@ -50,7 +50,7 @@ namespace Rules.Expressions.Eval
                 Type rightType = typeof(string);
                 if (leafExpr.RightSideIsExpression)
                 {
-                    var rightExpression = ctxParameter.BuildExpression(leafExpr.Right);
+                    var rightExpression = ctxParameter.EvaluateExpression(leafExpr.Right);
                     lambda = Expression.Lambda(rightExpression, ctxParameter);
                     getValue = lambda.Compile();
                     var expectedObj = getValue.DynamicInvoke(instance);
@@ -90,7 +90,7 @@ namespace Rules.Expressions.Eval
         private static Func<T, string> BuildGetStringFunc<T>(string leafExpressionCondition, bool handleNullableType = true, string prefix = null)
         {
             var ctxExpression = Expression.Parameter(typeof(T), "ctx");
-            var targetExpression = ctxExpression.BuildExpression(leafExpressionCondition, handleNullableType);
+            var targetExpression = ctxExpression.EvaluateExpression(leafExpressionCondition, handleNullableType);
             Func<T, string> toString = null;
             if (targetExpression.Type == typeof(int))
             {
