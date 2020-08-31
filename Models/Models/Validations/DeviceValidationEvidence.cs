@@ -1,17 +1,15 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="Rule.cs" company="Microsoft Corporation">
+// <copyright file="DeviceValidationEvidence.cs" company="Microsoft Corporation">
 //   Copyright (c) 2020 Microsoft Corporation.  All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace Models.Rules
+namespace Models.Validations
 {
-
-    public class Rule : TrackableEntity
+    public class DeviceValidationEvidence
     {
-        public string Name { get; set; }
-        public string Category { get; set; }
-        public string WhenExpression { get; set; }
-        public string IfExpression { get; set; }
+        public string PropertyPath { get; set; }
+        public string Actual { get; set; }
+        public string Expected { get; set; }
     }
 }

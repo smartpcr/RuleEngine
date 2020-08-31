@@ -9,54 +9,47 @@
 namespace Rules.Expressions.Tests
 {
     using System;
-    using System.Collections.Generic;
     using System.Linq;
-    using System.Text.RegularExpressions;
+    using System.Linq.Expressions;
     using Builders;
+    using Evaluators;
     using FluentAssertions;
-    using LightBDD.Framework;
     using LightBDD.MsTest2;
     using Models.IoT;
-    using Rules.Expressions.Helpers;
-    using TestModels;
     using TestModels.IoT;
 
     public partial class PropPathBuilder_feature: FeatureFixture
     {
-        private static readonly Regex PartSplitter = new Regex(@"\.(?![^(]*\))", RegexOptions.Compiled); // only matches dot (.) outside parenthesis
+        private PropertyPathBuilder<Device> propPathBuilder;
         private string startsWith;
-        private List<PropertyPath> allPropPaths;
-        private List<PropertyPath> nextParts;
 
         private void Current_path(string currentPath)
         {
             startsWith = currentPath;
-            var propPathBuilder = new PropertyPathBuilder<Device>(
-                new MockPropExpressionBuilder(),
-                new MockPropValuesProvider());
-            allPropPaths = propPathBuilder.AllPropPaths;
-            nextParts = propPathBuilder.GetNextFieldPart(currentPath);
-            StepExecution.Current.Comment($"Evidence\n{nextParts.FormatObject()}\n");
+            propPathBuilder = new PropertyPathBuilder<Device>(new MockPropValuesProvider());
         }
 
-        private void Depth_of_all_prop_path_should_be_not_be_larger_than(int allowedDepth)
+        private void Next_parts_should_contain(string expectedNextPart, Type expectedNextType, string args)
         {
-            var maxDepth = allPropPaths.Select(pt => PartSplitter.Split(pt.Path).Length).Max();
-            maxDepth.Should().BeLessOrEqualTo(allowedDepth);
-        }
-
-        private void Total_of_all_prop_path_should_be_not_be_greater_than(int maxCount)
-        {
-            allPropPaths.Count.Should().BeLessOrEqualTo(maxCount);
-        }
-
-        private void Next_parts_should_contain(string expectedNextPart, Type expectedNextType)
-        {
+            var nextParts = propPathBuilder.Next(startsWith);
             nextParts.Should().NotBeNullOrEmpty();
-            var currentPath = string.IsNullOrEmpty(startsWith) ? expectedNextPart : $"{startsWith}.{expectedNextPart}";
-            var found = nextParts.FirstOrDefault(pt => pt.Path == currentPath);
+            var found = nextParts.FirstOrDefault(pt => pt.Path == expectedNextPart);
             found.Should().NotBeNull();
-            found.Type.Should().Be(expectedNextType);
+            var argValues = args.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries);
+            found!.ArgumentCount.Should().Be(argValues.Length);
+            if (argValues.Length > 0)
+            {
+                var contextType = typeof(Device);
+                var contextParameter = Expression.Parameter(contextType, "ctx");
+                var functionExpr = expectedNextPart.Replace("()", $"({args})");
+                var currentPath = string.IsNullOrEmpty(startsWith) ? functionExpr : $"{startsWith}.{functionExpr}";
+                var targetExpression = contextParameter.EvaluateExpression(currentPath);
+                targetExpression.Type.Should().Be(expectedNextType);
+            }
+            else
+            {
+                found!.Type.Should().Be(expectedNextType);
+            }
         }
     }
 }

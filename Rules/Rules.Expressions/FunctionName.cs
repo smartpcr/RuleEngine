@@ -116,6 +116,29 @@ namespace Rules.Expressions
                 case FunctionName.Max:
                 case FunctionName.Min:
                 case FunctionName.Sum:
+                case FunctionName.First:
+                case FunctionName.Last:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        public static bool ReturnTypeIsInt(this FunctionName functionName)
+        {
+            return functionName == FunctionName.Count || functionName == FunctionName.DistinctCount;
+        }
+
+        public static bool AllowMemberAggregate(this FunctionName functionName)
+        {
+            switch (functionName)
+            {
+                case FunctionName.Average:
+                case FunctionName.Max:
+                case FunctionName.Min:
+                case FunctionName.Sum:
+                case FunctionName.First:
+                case FunctionName.Last:
                     return true;
                 default:
                     return false;

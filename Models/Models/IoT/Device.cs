@@ -6,8 +6,11 @@
 
 namespace Models.IoT
 {
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations.Schema;
+    using Newtonsoft.Json;
+    using Validations;
 
     public class Device : DeviceData
     {
@@ -21,7 +24,20 @@ namespace Models.IoT
         public List<DeviceData> Children { get; set; }
         public bool IsRedundantDevice { get; set; }
         
-        [NotMapped] public List<DataPoint> DataPoints { get; set; }
-        
+     
+        #region evaluation
+        [JsonIgnore, NotMapped] public EvaluationContext EvaluationContext { get; set; }
+
+        [JsonIgnore, NotMapped] public ConcurrentDictionary<string, DeviceValidationEvidence> EvidencesByRule { get; private set; }
+
+        public void AddEvaluationEvidence(DeviceValidationEvidence evidence)
+        {
+            if (EvaluationContext.CurrentRuleId.Value != null)
+            {
+                EvidencesByRule ??= new ConcurrentDictionary<string, DeviceValidationEvidence>();
+                EvidencesByRule.AddOrUpdate(EvaluationContext.CurrentRuleId.Value, evidence, (key, value) => evidence);
+            }
+        }
+        #endregion
     }
 }

@@ -25,55 +25,39 @@ I want to be able to discover property paths of device")]
     public partial class PropPathBuilder_feature
     {
         [Scenario]
-        public void Should_limit_prop_path_depth()
-        {
-            Runner.RunScenario(
-                given => Current_path(""),
-                then => Depth_of_all_prop_path_should_be_not_be_larger_than(5));
-        }
-
-        [Scenario]
-        public void Should_limit_permutation_space()
-        {
-            Runner.RunScenario(
-                given => Current_path(""),
-                then => Total_of_all_prop_path_should_be_not_be_greater_than(250000));
-        }
-
-        [Scenario]
         [DataRow("", "DeviceType", typeof(DeviceType))]
         [DataRow("", "Hierarchy", typeof(string))]
-        [DataRow("", "KvaRating", typeof(decimal?))]
-        [DataRow("", "PrimaryParentDevice", typeof(Device))]
-        public void Should_be_able_to_discover_simple_prop(string current, string expectedNextPart, Type expectedNextType)
+        [DataRow("", "KvaRating", typeof(double?))]
+        [DataRow("", "PrimaryParentDevice", typeof(DeviceData))]
+        public void Should_be_able_to_discover_simple_prop(string current, string expectedNextPart, Type expectedNextType, string args = "")
         {
             Runner.RunScenario(
                 given => Current_path(current),
-                then => Next_parts_should_contain(expectedNextPart, expectedNextType));
+                then => Next_parts_should_contain(expectedNextPart, expectedNextType, args));
         }
 
         [Scenario]
-        [DataRow("", "Children", typeof(List<Device>))]
+        [DataRow("", "Children", typeof(List<DeviceData>))]
         [DataRow("Children", "Count()", typeof(int))]
         [DataRow("ReadingStats", "Select(DataPoint)", typeof(IEnumerable<string>))]
         [DataRow("ReadingStats.Select(DataPoint)", "Count()", typeof(int))]
         [DataRow("ReadingStats", "OrderByDesc(Avg)", typeof(IEnumerable<ReadingStats>))]
-        [DataRow("LastReadings", "Where(DataPoint, Equals, 'Pwr.kW tot')", typeof(IEnumerable<LastReading>))]
-        [DataRow("LastReadings", "Select(Value)", typeof(IEnumerable<decimal>))]
-        public void Should_be_able_to_discover_collection_prop(string current, string expectedNextPart, Type expectedNextType)
+        [DataRow("LastReadings", "Where()", typeof(IEnumerable<LastReading>), "DataPoint, Equals, 'Pwr.kW tot'")]
+        [DataRow("LastReadings", "Select(Value)", typeof(IEnumerable<double>))]
+        public void Should_be_able_to_discover_collection_prop(string current, string expectedNextPart, Type expectedNextType, string args = "")
         {
             Runner.RunScenario(
                 given => Current_path(current),
-                then => Next_parts_should_contain(expectedNextPart, expectedNextType));
+                then => Next_parts_should_contain(expectedNextPart, expectedNextType, args));
         }
 
         [Scenario]
         [DataRow("ReadingStats.OrderByDesc(Avg)", "First()", typeof(ReadingStats))]
-        public void Should_be_able_to_order_and_pick_collections(string current, string expectedNextPart, Type expectedNextType)
+        public void Should_be_able_to_order_and_pick_collections(string current, string expectedNextPart, Type expectedNextType, string args = "")
         {
             Runner.RunScenario(
                 given => Current_path(current),
-                then => Next_parts_should_contain(expectedNextPart, expectedNextType));
+                then => Next_parts_should_contain(expectedNextPart, expectedNextType, args));
         }
 
         [Scenario]
@@ -81,7 +65,7 @@ I want to be able to discover property paths of device")]
         {
             Runner.RunScenario(
                 given => Current_path("ReadingStats.OrderByDesc(Avg)"),
-                then => Next_parts_should_contain("Where(DataPoint, Equals, 'Pwr.kW tot')", typeof(IEnumerable<ReadingStats>)));
+                then => Next_parts_should_contain("Where()", typeof(IEnumerable<ReadingStats>), "DataPoint, Equals, 'Pwr.kW tot'"));
         }
 
         [Scenario]
@@ -89,7 +73,7 @@ I want to be able to discover property paths of device")]
         {
             Runner.RunScenario(
                 given => Current_path("ReadingStats.OrderByDesc(Avg).Where(DataPoint, Equals, 'Pwr.kW tot')"),
-                then => Next_parts_should_contain("Sum(Avg)", typeof(double)));
+                then => Next_parts_should_contain("Sum(Avg)", typeof(double), ""));
         }
 
         [Scenario]
@@ -97,15 +81,15 @@ I want to be able to discover property paths of device")]
         {
             Runner.RunScenario(
                 given => Current_path("Children.SelectMany(ReadingStats).Where(DataPoint, Equals, 'Pwr.kW tot')"),
-                then => Next_parts_should_contain("Sum(Avg)", typeof(double)));
+                then => Next_parts_should_contain("Sum(Avg)", typeof(double), ""));
         }
 
         [Scenario]
         public void Should_be_able_to_traverse_recursive_props()
         {
             Runner.RunScenario(
-                given => Current_path("Traverse(PrimaryParentDevice, DeviceName)"),
-                then => Next_parts_should_contain("Last()", typeof(string)));
+                given => Current_path("Traverse(PrimaryParent)"),
+                then => Next_parts_should_contain("Last()", typeof(string), ""));
         }
     }
 }

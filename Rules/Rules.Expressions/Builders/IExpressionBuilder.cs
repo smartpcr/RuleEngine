@@ -1,17 +1,16 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="Rule.cs" company="Microsoft Corporation">
+// <copyright file="IExpressionBuilder.cs" company="Microsoft Corporation">
 //   Copyright (c) 2020 Microsoft Corporation.  All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace Models.Rules
+namespace Rules.Expressions.Builders
 {
+    using System.Collections.Generic;
 
-    public class Rule : TrackableEntity
+    public interface IExpressionBuilder<T> where T : class
     {
-        public string Name { get; set; }
-        public string Category { get; set; }
-        public string WhenExpression { get; set; }
-        public string IfExpression { get; set; }
+        List<PropertyPath> Next(string current);
+        List<string> GetApplicableOperators(string propPath);
     }
 }

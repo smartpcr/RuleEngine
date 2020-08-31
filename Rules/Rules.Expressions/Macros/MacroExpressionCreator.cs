@@ -34,15 +34,21 @@ namespace Rules.Expressions.Macros
                 return Expression.Call(null, macroMethod, parentExpression);
             }
 
-            var argExpressions = new List<Expression>();
-            argExpressions.Add(parentExpression);
+            var argExpressions = new List<Expression> {parentExpression};
             for (var i = 1; i < inputParameters.Length; i++)
             {
                 object arg = args[i - 1];
                 var parameter = inputParameters[i];
                 if (arg.GetType() != parameter.ParameterType)
                 {
-                    arg = Convert.ChangeType(arg, parameter.ParameterType);
+                    if (parameter.ParameterType.IsEnum && arg is string strValue)
+                    {
+                        arg = Enum.Parse(parameter.ParameterType, strValue, true);
+                    }
+                    else
+                    {
+                        arg = Convert.ChangeType(arg, parameter.ParameterType);    
+                    }
                 }
                 var paramExpr = Expression.Convert(Expression.Constant(arg), parameter.ParameterType);
                 argExpressions.Add(paramExpr);

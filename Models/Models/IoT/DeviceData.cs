@@ -41,5 +41,6 @@ namespace Models.IoT
         
         public List<ReadingStats> ReadingStats { get; set; }
         public List<LastReading> LastReadings { get; set; }
+        public List<DataPoint> DataPoints { get; set; }
     }
 }

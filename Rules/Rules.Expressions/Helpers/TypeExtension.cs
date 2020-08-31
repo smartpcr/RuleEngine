@@ -49,6 +49,16 @@ namespace Rules.Expressions.Helpers
             return type.IsPrimitive || type.IsValueType;
         }
 
+        /// <summary>
+        /// primitive type, value type and string, including nullable types
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static bool IsScalarType(this Type type)
+        {
+            return type.IsPrimitiveType() || type == typeof(string) || Nullable.GetUnderlyingType(type)?.IsPrimitiveType() == true;
+        }
+
         public static bool IsDateType(this Type type)
         {
             return Type.GetTypeCode(type) == TypeCode.DateTime;

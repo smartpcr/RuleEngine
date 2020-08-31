@@ -22,16 +22,6 @@ I want to evaluate json rule against power device")]
     public partial class DeviceValidation_feature
     {
         [Scenario]
-        public void parents_hierarchy_check()
-        {
-            Runner.RunScenario(
-                given => A_device("device_with_relations"),
-                when => I_use_json_rule("parents_hierarchy_check"),
-                then => Filter_results_should_be(true),
-                then => Assert_results_should_be(true));
-        }
-
-        [Scenario]
         public void power_consumption_check()
         {
             Runner.RunScenario(
@@ -47,16 +37,6 @@ I want to evaluate json rule against power device")]
             Runner.RunScenario(
                 given => A_device("device_with_zenon_events"),
                 when => I_use_json_rule("staleness_check"),
-                then => Filter_results_should_be(true),
-                then => Assert_results_should_be(true));
-        }
-
-        [Scenario]
-        public void hierarchy_loop_check()
-        {
-            Runner.RunScenario(
-                given => A_device("device_with_relations"),
-                when => I_use_json_rule("hierarchy_loop_check"),
                 then => Filter_results_should_be(true),
                 then => Assert_results_should_be(true));
         }

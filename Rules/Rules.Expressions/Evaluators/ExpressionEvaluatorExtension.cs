@@ -18,7 +18,7 @@ namespace Rules.Expressions.Evaluators
     using Helpers;
     using Macros;
 
-    public static class ExpressionBuilderExtension
+    public static class ExpressionEvaluatorExtension
     {
         public static Expression EvaluateExpression(this ParameterExpression contextExpression, string propPath, bool handleNullableType = true)
         {
