@@ -1,0 +1,70 @@
+{
+  "name": "rule-editor",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@microsoft/applicationinsights-web": "^2.4.4",
+    "@testing-library/jest-dom": "^4.2.4",
+    "@testing-library/react": "^9.3.2",
+    "@testing-library/user-event": "^7.1.2",
+    "ag-grid-react": "^23.2.1",
+    "antd": "^4.0.0",
+    "azure-devops-ui": "^2.164.2",
+    "chalk": "^3.0.0",
+    "global": "^4.4.0",
+    "lodash": "^4.17.15",
+    "office-ui-fabric-react": "^7.98.1",
+    "react": "^16.13.0",
+    "react-adal": "^0.5.0",
+    "react-dom": "^16.13.0",
+    "react-redux": "^7.2.0",
+    "react-router": "^3.2.1",
+    "react-router-redux": "^4.0.8",
+    "react-scripts": "3.4.0",
+    "redux": "^4.0.5",
+    "redux-devtools-extension": "^2.13.8",
+    "redux-thunk": "^2.3.0",
+    "typesafe-actions": "^5.1.0",
+    "typescript": "^3.8.3"
+  },
+  "devDependencies": {
+    "@ag-grid-enterprise/all-modules": "^23.2.1",
+    "@types/jest": "^24.0.0",
+    "@types/lodash": "^4.14.149",
+    "@types/node": "^13.7.7",
+    "@types/react": "^16.9.0",
+    "@types/react-adal": "^0.4.2",
+    "@types/react-dom": "^16.9.0",
+    "@types/react-redux": "^7.1.7",
+    "@types/react-router": "^3.0.15",
+    "@types/react-router-redux": "^4.0.51",
+    "babel-plugin-import": "^1.13.0",
+    "customize-cra": "^0.9.1",
+    "i18n-webpack-plugin": "^1.0.0",
+    "less": "^3.11.1",
+    "less-loader": "^5.0.0",
+    "node-sass": "^4.13.1",
+    "react-app-rewired": "^2.1.5"
+  },
+  "scripts": {
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build",
+    "test": "react-app-rewired test",
+    "eject": "react-app-rewired eject"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

@@ -5,3 +5,4 @@ obj/
 .DS_Store
 *.DotSettings.user
 /TestResults
+node_modules/

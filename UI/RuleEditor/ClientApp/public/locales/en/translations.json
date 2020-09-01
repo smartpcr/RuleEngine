@@ -1,0 +1,42 @@
+{
+  "common": {
+    "title": "DC Health",
+    "pivot": {
+      "all": "All",
+      "mine": "Mine"
+    },
+    "spinner": {
+      "label": "Loading"
+    }
+  },
+  "dataCenterListGrid": {
+    "name": "Data center name",
+    "code": "Data center code",
+    "errors": {
+      "noConnection": "There was a problem with your connection. Please refresh and try again.",
+      "4xx": "Your request could not be processed. Please refresh and try again.",
+      "5xx": "The server failed to respond. Please try again later.",
+      "unknown": "An unknown error occured."
+    }
+  },
+  "dataCenterListNotMatchPage": {
+    "noMatchTitle": "No results found",
+    "noMatchText": "Oops... we can't seem to find what you are looking for",
+    "noMatchImage": "Image representing no results"
+  },
+  "dataCenterListEmptyPage": {
+    "createDataCenterTitle": "Start managing data center compliance",
+    "createDataCenterDetails": "Add data center to manage devices",
+    "newDataCenterButton": "Add DataCenter",
+    "newImageTitle": "Image representing to create a data center"
+  },
+  "datacenterPage": {
+    "datacenterDetails": {
+      "description": "About",
+      "longName": "Long Name",
+      "type": "Type",
+      "shortName": "Short Name",
+      "externalFacing": "External Facing"
+    }
+  }
+}

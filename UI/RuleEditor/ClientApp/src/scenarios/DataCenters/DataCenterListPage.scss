@@ -1,0 +1,79 @@
+@import "../Shared/Common.scss";
+
+html,
+main,
+section,
+div#main {
+  height: 100%;
+}
+
+body {
+  height: 100%;
+  margin: 0px;
+  font-family: $fontFamily;
+  font-weight: $fontWeightlightBold;
+}
+
+.datacenter-list-page {
+  height: 100%;
+  color: $foregroundDarkColor;
+
+  .ms-DetailsRow-cell {
+    padding-top: 15px;
+  }
+
+  .ms-DetailsRow :hover {
+    background-color: $rowHoverColor;
+  }
+
+  .datacenter-list-name-column {
+    .datacenter-list-name {
+      text-overflow: ellipsis;
+      overflow: hidden;
+      vertical-align: middle;
+      display: inline-flex;
+
+      a {
+        font-size: 15px;
+        font-weight: $fontWeightSemiBold;
+        vertical-align: super;
+        text-decoration: none;
+        color: $foregroundDarkColor;
+      }
+
+      a:hover {
+        color: $anchorHoverColor;
+        text-decoration: underline;
+      }
+
+      .datacenter-icon {
+        font-size: 22px;
+      }
+    }
+  }
+
+  .datacenter-list-path-column {
+    color: $foregroundLightColor;
+    font-size: 14px;
+  }
+
+  .datacenter-empty-page,
+  .datacenter-nomatch-page,
+  .datacenter-notowner-page {
+    padding-top: 18px;
+    text-align: center;
+    font-size: $normalFontSize;
+    img {
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    h1 {
+      font-size: $titleFontSize;
+      font-weight: $titleFontWeight;
+    }
+    .add-datacenter-button {
+      margin-top: 28px;
+    }
+  }
+}
